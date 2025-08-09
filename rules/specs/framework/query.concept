@@ -1,0 +1,39 @@
+<concept_spec>
+
+concept QuerySpec
+
+purpose
+    to specify the `queries` section where query functions are pure and return arrays of bindings
+
+state
+    a set of Queries with
+        a name String
+    a set of QParams with
+        a query String
+        a name String
+        a type String
+        a role of INPUT or OUTPUT
+
+actions
+    declare (name: String) : (query: String)
+        register a query function name
+        return query
+    param (query: String, name: String, type: String, role: String) : (param: String)
+        declare a parameter for a query with role INPUT or OUTPUT
+        return param id
+
+queries
+    _get (query: String) : (name: String)
+        get a query
+    _getParams (query: String, role: String) : (name: String, type: String)
+        list params by role
+
+operational principle
+    after declare (name: "_getOptions") : (query: q)
+    and param (query: q, name: "question", type: "String", role: "INPUT") : (param: p1)
+    and param (query: q, name: "option", type: "String", role: "OUTPUT") : (param: p2)
+    then _getParams (query: q, role: "OUTPUT") lists (name: "option")
+
+</concept_spec>
+
+

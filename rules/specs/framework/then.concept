@@ -1,0 +1,29 @@
+<concept_spec>
+
+concept ThenSpec
+
+purpose
+    to specify the `then` clause action invocations constructed from bound variables
+
+state
+    a set of Invocations with
+        a name String
+        a action String
+        a input Json
+
+actions
+    declare (name: String, action: String, input: Json) : (invocation: String)
+        register a then invocation shape
+        return invocation id
+
+queries
+    _list () : (name: String, action: String)
+        list invocations
+
+operational principle
+    after declare (name: "Notify", action: "Notification.notify", input: {"message": "Reached 10"}) : (invocation: v)
+    then _list () includes (name: "Notify")
+
+</concept_spec>
+
+

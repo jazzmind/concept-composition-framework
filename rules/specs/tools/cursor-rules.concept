@@ -1,0 +1,49 @@
+<concept_spec>
+
+concept CursorRulesSpec
+
+purpose
+    to model the structure and best practices for `.cursor/rules` files so agents can select and apply rules efficiently
+
+state
+    a set of RuleFiles with
+        a file String
+        a description String
+    a set of Conventions with
+        a name String
+        a value String
+    a set of Frontmatter with
+        a field String
+        a description String
+
+actions
+    declare (file: String, description: String) : (file: String)
+        declare a standard rule file and its purpose
+        return file
+    convention (name: String, value: String) : (name: String)
+        declare a naming/location convention (e.g., prefix buckets, directory)
+        return name
+    frontmatter (field: String, description: String) : (field: String)
+        declare a required frontmatter field and its contract
+        return field
+
+queries
+    _standard () : (file: String, description: String)
+        list standard rule files and roles
+    _conventions () : (name: String, value: String)
+        list conventions
+    _frontmatter () : (field: String, description: String)
+        list frontmatter fields
+
+operational principle
+    after convention (name: "location", value: ".cursor/rules/") : (name: n1)
+    and convention (name: "naming", value: "PREFIX-name.mdc with numeric buckets (0xx core, 1xxx lang, 2xxx framework, 3xx testing, 8xx workflows, 9xx templates)") : (name: n2)
+    and frontmatter (field: "description", description: "ACTION when TRIGGER to OUTCOME (<=120 chars)") : (field: f1)
+    and frontmatter (field: "globs", description: "file match patterns used to determine applicability") : (field: f2)
+    and declare (file: "0XX-core.mdc", description: "core standards and meta rules like 000-core") : (file: r1)
+    and declare (file: "8XX-workflows.mdc", description: "task/workflow orchestration rules (e.g., evals runbook)") : (file: r2)
+    then _conventions () includes (name: "location") and _frontmatter () includes (field: "globs") and _standard () includes r1 and r2
+
+</concept_spec>
+
+

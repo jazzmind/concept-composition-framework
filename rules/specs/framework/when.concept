@@ -1,0 +1,30 @@
+<concept_spec>
+
+concept WhenSpec
+
+purpose
+    to specify the `when` clause patterns matching completed actions by input/output bindings within a flow
+
+state
+    a set of Patterns with
+        a name String
+        a action String
+        a input Json
+        a output Json
+
+actions
+    declare (name: String, action: String, input: Json, output: Json) : (pattern: String)
+        register a when pattern for an action with input/output bindings
+        return pattern id
+
+queries
+    _list () : (name: String, action: String)
+        list patterns
+
+operational principle
+    after declare (name: "ButtonIncrement", action: "Button.clicked", input: {"kind": "increment_counter"}, output: {}) : (pattern: p)
+    then _list () includes (name: "ButtonIncrement")
+
+</concept_spec>
+
+

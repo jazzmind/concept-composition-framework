@@ -1,0 +1,38 @@
+<concept_spec>
+
+concept StateSpec
+
+purpose
+    to specify the `state` section of a concept using SSF (Simple State Form)
+
+state
+    a set of Sets with
+        a name String
+    a set of Fields with
+        a set String
+        a name String
+        a type String
+        an optional cardinality String
+
+actions
+    declareSet (name: String) : (set: String)
+        register a set name
+        return the set name
+    declareField (set: String, name: String, type: String, cardinality: String) : (field: String)
+        register a field on a set with optional cardinality (e.g., set, seq, optional)
+        return a field identifier
+
+queries
+    _getSets () : (name: String)
+        list declared sets
+    _getFields (set: String) : (name: String, type: String, cardinality: String)
+        list fields declared for a set
+
+operational principle
+    after declareSet (name: "Users") : (set: "Users")
+    and declareField (set: "Users", name: "email", type: "String", cardinality: "optional") : (field: f)
+    then _getFields (set: "Users") lists (name: "email", type: "String")
+
+</concept_spec>
+
+

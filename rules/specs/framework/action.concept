@@ -1,0 +1,39 @@
+<concept_spec>
+
+concept ActionSpec
+
+purpose
+    to specify the `actions` section where each action takes one input map and returns one output map
+
+state
+    a set of Actions with
+        a name String
+    a set of Params with
+        a action String
+        a name String
+        a type String
+        a role of INPUT or OUTPUT
+
+actions
+    declare (name: String) : (action: String)
+        register an action name
+        return action
+    param (action: String, name: String, type: String, role: String) : (param: String)
+        declare a parameter for an action with role INPUT or OUTPUT
+        return param id
+
+queries
+    _get (action: String) : (name: String)
+        get an action
+    _getParams (action: String, role: String) : (name: String, type: String)
+        list params by role
+
+operational principle
+    after declare (name: "createQuiz") : (action: a)
+    and param (action: a, name: "owner", type: "String", role: "INPUT") : (param: p1)
+    and param (action: a, name: "quiz", type: "String", role: "OUTPUT") : (param: p2)
+    then _getParams (action: a, role: "INPUT") lists (name: "owner") and _getParams (action: a, role: "OUTPUT") lists (name: "quiz")
+
+</concept_spec>
+
+

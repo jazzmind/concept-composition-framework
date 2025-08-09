@@ -1,0 +1,58 @@
+<concept_spec>
+
+concept SynchronizationSpec
+
+purpose
+    to specify synchronizations as combinations of when/where/then using the framework’s action/query semantics
+
+state
+    a set of Syncs with
+        a name String
+    a set of WhenClauses with
+        a sync String
+        a action String
+        a input Json
+        a output Json
+    a set of WhereSteps with
+        a sync String
+        a name String
+        a input Json
+        a output Json
+    a set of ThenInvocations with
+        a sync String
+        a action String
+        a input Json
+
+actions
+    declare (name: String) : (sync: String)
+        create a sync entry
+        return sync id
+    when (sync: String, action: String, input: Json, output: Json) : (when: String)
+        add a when clause
+        return id
+    where (sync: String, name: String, input: Json, output: Json) : (where: String)
+        add a where step
+        return id
+    then (sync: String, action: String, input: Json) : (then: String)
+        add a then invocation
+        return id
+
+queries
+    _get (sync: String) : (name: String)
+        get sync
+    _whens (sync: String) : (action: String, input: Json, output: Json)
+        list when clauses
+    _wheres (sync: String) : (name: String, input: Json, output: Json)
+        list where steps
+    _thens (sync: String) : (action: String, input: Json)
+        list then invocations
+
+operational principle
+    after declare (name: "NotifyWhenReachTen") : (sync: s)
+    and when (sync: s, action: "Button.clicked", input: {"kind": "increment_counter"}, output: {}) : (when: w1)
+    and when (sync: s, action: "Counter.increment", input: {}, output: {}) : (when: w2)
+    and where (sync: s, name: "JoinCounter", input: {}, output: {"count": "symbol"}) : (where: r)
+    and then (sync: s, action: "Notification.notify", input: {"message": "Reached 10"}) : (then: t)
+    then _whens (sync: s) and _wheres (sync: s) and _thens (sync: s) enumerate the synchronization
+
+</concept_spec>

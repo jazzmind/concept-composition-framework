@@ -1,0 +1,42 @@
+<concept_spec>
+
+concept CursorToolSpec
+
+purpose
+    to guide construction of Cursor `.cursor/rules` from concept specs so Cursor can autonomously scaffold, code, test, and refine
+
+state
+    a set of CursorPlans with
+        a plan String
+        a files Json
+        a checklist Json
+    a set of CursorInstalls with
+        a plan String
+        a path String
+
+actions
+    construct (files: Json, checklist: Json) : (plan: String)
+        assemble a generation plan for rule files and execution checklist for tasks
+        return plan id
+    install (plan: String, path: String) : (path: String)
+        install rule files under .cursor/rules based on the plan
+        return installed path
+
+queries
+    _proposeFiles () : (files: Json)
+        propose rule files honoring 000-core: bucketed names, concise frontmatter, deterministic examples
+    _checkIdempotence (path: String) : (ok: Boolean)
+        verify that re-installation will be non-destructive and append-safe
+
+operational principle
+    after construct (files: {
+        "00-foundations.mdc": {},
+        "10-project-bootstrap.mdc": {},
+        "20-concepts/API.mdc": {}
+    }, checklist: ["bootstrap", "regen concepts", "write syncs", "run evals"]) : (plan: p)
+    and install (plan: p, path: ".cursor/rules") : (path: ".cursor/rules")
+    then _checkIdempotence (path: ".cursor/rules") : (ok: true)
+
+</concept_spec>
+
+

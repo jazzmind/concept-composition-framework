@@ -1,0 +1,28 @@
+<concept_spec>
+
+concept OperationalPrincipleSpec
+
+purpose
+    to specify the `operational principle` section as executable scenarios linking actions and state expectations
+
+state
+    a set of Scenarios with
+        a name String
+        a text String
+
+actions
+    declare (name: String, text: String) : (scenario: String)
+        register a scenario that demonstrates purpose via actions and state
+        return scenario id
+
+queries
+    _list () : (name: String, text: String)
+        list scenarios
+
+operational principle
+    after declare (name: "Quiz CRUD happy path", text: "create quiz; add question; add options; expect list to contain them") : (scenario: s)
+    then _list () includes (name: "Quiz CRUD happy path")
+
+</concept_spec>
+
+

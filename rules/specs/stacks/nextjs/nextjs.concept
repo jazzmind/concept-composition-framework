@@ -1,0 +1,47 @@
+<concept_spec>
+
+concept NextJSStackSpec
+
+purpose
+    to describe core purpose, principles, and best-practice patterns for LLM-driven Next.js (App Router, TS) codegen from concept specs
+
+state
+    a set of NextPlans with
+        a plan String
+        a routes Json
+        a files Json
+        a tests Json
+    a set of Principles with
+        a name String
+        a text String
+
+actions
+    plan (routes: Json, files: Json, tests: Json) : (plan: String)
+        synthesize a generation plan for routes, engine wiring, ui stubs, and tests
+        return plan
+    enumerate (concepts: Json, syncs: Json) : (routes: Json)
+        infer route list from API.request patterns or CRUD defaults
+        return route map
+    principle (name: String, text: String) : (name: String)
+        register a best-practice design guideline (e.g., route colocation, server-only engine)
+        return name
+
+queries
+    _routeShape () : (shape: Json)
+        return canonical nextjs route shape: app/api/*/route.ts with METHOD handlers
+    _engineShape () : (shape: Json)
+        return canonical engine wiring file locations and exports ({ API })
+    _testShape () : (shape: Json)
+        return canonical tests per route and a smoke flow
+    _principles () : (name: String, text: String)
+        list best practices
+
+operational principle
+    after enumerate (concepts: { "API": true }, syncs: { "paths": ["/quizzes"] }) : (routes: { "/quizzes": ["GET", "POST"] })
+    and plan (routes: { "/quizzes": ["GET", "POST"] }, files: { "lib/sync/engine.ts": {} }, tests: { "/quizzes": ["ok"] }) : (plan: p)
+    and principle (name: "Server-only engine", text: "Instantiate Sync and concepts in a server-only module, export API proxy for handlers") : (name: pr)
+    then _routeShape () and _engineShape () and _testShape () describe what to generate for p and _principles () includes (name: "Server-only engine")
+
+</concept_spec>
+
+

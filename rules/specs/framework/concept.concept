@@ -1,0 +1,42 @@
+<concept_spec>
+
+concept ConceptSpec
+
+purpose
+    to specify the structure of a `.concept` file itself, referencing SSF for state and the design rules for actions/queries/operational principle
+
+state
+    a set of Sections with
+        a section String
+        a required Flag
+        a description String
+    a set of Constraints with
+        a constraint String
+        a text String
+
+actions
+    declareSection (section: String, required: Flag, description: String) : (section: String)
+        register a section (concept, purpose, state, actions, queries, operational principle)
+        return section
+    constrain (constraint: String, text: String) : (constraint: String)
+        add a constraint derived from concept-design and SSF (e.g., single input/output maps; queries return arrays)
+        return constraint
+
+queries
+    _listSections () : (section: String, required: Flag, description: String)
+        list declared sections
+    _listConstraints () : (constraint: String, text: String)
+        list constraints
+
+operational principle
+    after declareSection (section: "concept", required: true, description: "Unique name for the concept") : (section: s1)
+    and declareSection (section: "purpose", required: true, description: "Narrative of intent") : (section: s2)
+    and declareSection (section: "state", required: true, description: "SSF declarations of sets/fields") : (section: s3)
+    and declareSection (section: "actions", required: true, description: "Action signatures with single input/output maps") : (section: s4)
+    and declareSection (section: "queries", required: false, description: "Pure functions returning arrays of bindings") : (section: s5)
+    and declareSection (section: "operational principle", required: false, description: "Scenario demonstrating purpose") : (section: s6)
+    and constrain (constraint: "Single-arg actions", text: "All actions must take one input map and return one output map") : (constraint: c1)
+    and constrain (constraint: "Pure queries", text: "Queries must be side-effect free and return arrays") : (constraint: c2)
+    then _listSections () enumerates s1..s6 and _listConstraints () includes c1 and c2
+
+</concept_spec>

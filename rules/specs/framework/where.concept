@@ -1,0 +1,29 @@
+<concept_spec>
+
+concept WhereSpec
+
+purpose
+    to specify the `where` clause transformations as pure frame-enriching queries and filters
+
+state
+    a set of Queries with
+        a name String
+        a input Json
+        a output Json
+
+actions
+    declare (name: String, input: Json, output: Json) : (query: String)
+        register a where query mapping input bindings to output bindings
+        return query id
+
+queries
+    _list () : (name: String)
+        list declared where queries
+
+operational principle
+    after declare (name: "JoinCounter", input: {}, output: {"count": "symbol"}) : (query: q)
+    then _list () includes (name: "JoinCounter")
+
+</concept_spec>
+
+

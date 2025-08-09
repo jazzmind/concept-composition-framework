@@ -1,0 +1,229 @@
+---
+globs: *.concept
+alwaysApply: false
+---
+# State Specification Rules (SSF)
+
+## Simple State Form (SSF) Syntax
+
+SSF is a human-readable syntax for data modeling that translates to formal database schemas.
+
+### Basic Grammar
+```
+// Set declaration
+a set of ObjectType with
+    a fieldName PrimitiveType
+    an optional fieldName PrimitiveType
+    a fieldName set of ObjectType
+
+// Subset declaration  
+a SubType set of ObjectType with
+    additional fields...
+
+// Singleton (exactly one element)
+an element GlobalSettings with
+    a setting String
+```
+
+### Primitive Types
+- `String`: Text values
+- `Number`: Numeric values  
+- `Flag`: Boolean values
+- `Date`: Date-only values
+- `DateTime`: Date and time values
+
+### Field Types
+- **Scalar**: `a name String`
+- **Set**: `a followers set of Users`
+- **Sequence**: `a tags seq of String` (ordered)
+- **Optional**: `an optional bio String`
+- **Enumeration**: `a status of PENDING or ACTIVE or SUSPENDED`
+
+### Advanced Patterns
+```
+// Implicit field names (field name = lowercase type name)
+a set of Users with
+    a Profile          // field name is "profile"
+    a set of Posts     // field name is "posts"
+
+// Subset with additional relations
+a set of Items with
+    a title String
+
+a Books set of Items with
+    an isbn String
+    a pageCount Number
+
+// Global singleton settings
+an element GlobalConfig with
+    a deployed Flag
+    an apiKey String
+```
+
+## MongoDB Translation Rules
+
+### Collections
+- Each set/subset becomes a MongoDB collection
+- Collection name matches the SSF type name
+- Singletons are collections with exactly one document
+
+### Fields
+- SSF fields become document properties
+- `set of Type` becomes arrays: `fieldName: ObjectId[]`
+- `optional` fields can be `null` or `undefined`
+- Enumerations become string fields with validation
+
+### Data Types
+- `String` → MongoDB String
+- `Number` → MongoDB Number/Integer
+- `Flag` → MongoDB Boolean
+- `Date/DateTime` → MongoDB Date (BSON)
+- Object references → MongoDB ObjectId
+
+### Example Translation
+```
+// SSF
+a set of Users with
+    a name String
+    an optional email String
+    a followers set of Users
+    a status of ACTIVE or INACTIVE
+
+// MongoDB Schema
+{
+  _id: ObjectId,
+  name: String,
+  email: String | null,
+  followers: ObjectId[],
+  status: "ACTIVE" | "INACTIVE"
+}
+```
+
+## Validation Rules
+- Field names must be lowercase and unique within a set
+- Type names must be capitalized
+- Enumeration values must be UPPERCASE
+- No circular subset hierarchies
+- Set-typed fields cannot be optional (use empty array instead)
+
+## Best Practices
+- Keep state schemas simple and focused
+- Use subsets for classification, not inheritance
+- Prefer composition over complex hierarchies
+- Document the purpose of each set clearly
+- Use meaningful field and type names
+
+## Reference Implementation
+See [State Specification Guide](rules/docs/concept-state-specification.md) for complete grammar and examples.# State Specification Rules (SSF)
+
+## Simple State Form (SSF) Syntax
+
+SSF is a human-readable syntax for data modeling that translates to formal database schemas.
+
+### Basic Grammar
+```
+// Set declaration
+a set of ObjectType with
+    a fieldName PrimitiveType
+    an optional fieldName PrimitiveType
+    a fieldName set of ObjectType
+
+// Subset declaration  
+a SubType set of ObjectType with
+    additional fields...
+
+// Singleton (exactly one element)
+an element GlobalSettings with
+    a setting String
+```
+
+### Primitive Types
+- `String`: Text values
+- `Number`: Numeric values  
+- `Flag`: Boolean values
+- `Date`: Date-only values
+- `DateTime`: Date and time values
+
+### Field Types
+- **Scalar**: `a name String`
+- **Set**: `a followers set of Users`
+- **Sequence**: `a tags seq of String` (ordered)
+- **Optional**: `an optional bio String`
+- **Enumeration**: `a status of PENDING or ACTIVE or SUSPENDED`
+
+### Advanced Patterns
+```
+// Implicit field names (field name = lowercase type name)
+a set of Users with
+    a Profile          // field name is "profile"
+    a set of Posts     // field name is "posts"
+
+// Subset with additional relations
+a set of Items with
+    a title String
+
+a Books set of Items with
+    an isbn String
+    a pageCount Number
+
+// Global singleton settings
+an element GlobalConfig with
+    a deployed Flag
+    an apiKey String
+```
+
+## MongoDB Translation Rules
+
+### Collections
+- Each set/subset becomes a MongoDB collection
+- Collection name matches the SSF type name
+- Singletons are collections with exactly one document
+
+### Fields
+- SSF fields become document properties
+- `set of Type` becomes arrays: `fieldName: ObjectId[]`
+- `optional` fields can be `null` or `undefined`
+- Enumerations become string fields with validation
+
+### Data Types
+- `String` → MongoDB String
+- `Number` → MongoDB Number/Integer
+- `Flag` → MongoDB Boolean
+- `Date/DateTime` → MongoDB Date (BSON)
+- Object references → MongoDB ObjectId
+
+### Example Translation
+```
+// SSF
+a set of Users with
+    a name String
+    an optional email String
+    a followers set of Users
+    a status of ACTIVE or INACTIVE
+
+// MongoDB Schema
+{
+  _id: ObjectId,
+  name: String,
+  email: String | null,
+  followers: ObjectId[],
+  status: "ACTIVE" | "INACTIVE"
+}
+```
+
+## Validation Rules
+- Field names must be lowercase and unique within a set
+- Type names must be capitalized
+- Enumeration values must be UPPERCASE
+- No circular subset hierarchies
+- Set-typed fields cannot be optional (use empty array instead)
+
+## Best Practices
+- Keep state schemas simple and focused
+- Use subsets for classification, not inheritance
+- Prefer composition over complex hierarchies
+- Document the purpose of each set clearly
+- Use meaningful field and type names
+
+## Reference Implementation
+See [State Specification Guide](rules/docs/concept-state-specification.md) for complete grammar and examples.

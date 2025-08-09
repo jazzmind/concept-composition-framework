@@ -1,0 +1,122 @@
+---
+alwaysApply: true
+---
+
+# Next.js Integration Rules
+
+## Next.js App Router + Concepts Architecture
+
+### Project Structure
+```
+app/
+├── api/*/route.ts          # API routes proxying to concepts
+├── (ui)/page.tsx           # Main UI entry point  
+└── [dynamic]/page.tsx      # Dynamic routes for domain entities
+
+lib/
+├── sync/engine.ts          # Concept engine initialization
+└── concepts/               # Concept implementations
+
+specs/                      # Concept specifications
+syncs/                     # Synchronization definitions
+```
+
+### API Route Pattern
+```typescript
+// app/api/[...path]/route.ts
+import { API } from '@/lib/sync/engine';
+
+export async function GET(request: Request) {
+    const url = new URL(request.url);
+    const input = Object.fromEntries(url.searchParams.entries());
+    
+    const result = await API.request({ 
+        method: 'GET', 
+        path: url.pathname,
+        ...input 
+    });
+    
+    const response = await API._waitForResponse({ request: result.request });
+    return Response.json(response);
+}
+
+export async function POST(request: Request) {
+    const body = await request.json();
+    const url = new URL(request.url);
+    
+    const result = await API.request({
+        method: 'POST',
+        path: url.pathname,
+        ...body
+    });
+    
+    const response = await API._waitForResponse({ request: result.request });
+    return Response.json(response);
+}
+```
+
+### Engine Initialization
+```typescript
+// lib/sync/engine.ts
+import { SyncConcept } from '@/engine/mod';
+import { APIConcept } from '@/concepts/api';
+import { UserConcept } from '@/concepts/user';
+
+// Initialize sync engine
+const Sync = new SyncConcept();
+
+// Register concepts
+const concepts = {
+    API: new APIConcept(),
+    User: new UserConcept(),
+    // Add other domain concepts
+};
+
+// Instrument for reactivity
+const { API, User } = Sync.instrument(concepts);
+
+// Register synchronizations
+import * as syncs from '@/syncs';
+Sync.register(syncs);
+
+// Export for API routes
+export { API };
+```
+
+### Server-Side Patterns
+- **Server Actions**: Use concepts directly in server components and actions
+- **API Routes**: Proxy HTTP requests to `API` concept for external clients
+- **Edge Runtime**: Disable by default for MongoDB compatibility
+- **Environment**: Configure via `.env.local` for database connections
+
+### Client-Side Integration
+```typescript
+// Client components call API routes
+const response = await fetch('/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email })
+});
+```
+
+### Development Setup
+- Node.js 18+ required
+- Next.js 15+ with App Router
+- TypeScript strict mode enabled
+- MongoDB for persistence
+
+### Route Generation Strategy
+1. Parse `syncs/` for `API.request` patterns to infer routes
+2. Generate `app/api/*/route.ts` handlers for each endpoint
+3. Default to REST CRUD if no explicit sync patterns found
+4. Support dynamic routes for entity-specific operations
+
+### Testing Integration
+- Unit tests for individual concepts
+- Integration tests for API routes
+- End-to-end tests for complete user flows
+- Use `npm run api` for testing with auth bypass
+
+## Reference Files
+- [Next.js Stack Specification](rules/specs/stacks/nextjs/README.md)
+- [Next.js Concept Spec](rules/specs/stacks/nextjs/nextjs.concept)

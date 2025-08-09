@@ -1,4 +1,4 @@
-import { uuid } from "./engine/util";
+import { uuid } from "./framework/engine/util";
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline/promises";

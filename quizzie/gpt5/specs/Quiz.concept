@@ -1,0 +1,25 @@
+Purpose: Manage quizzes, questions, and options
+
+Actions:
+- createQuiz({ owner, title }) -> { quiz } | { error }
+- deleteQuiz({ quiz }) -> { quiz } | { error }
+- updateQuizTitle({ quiz, title }) -> { quiz } | { error }
+- addQuestion({ quiz, text }) -> { question } | { error }
+- deleteQuestion({ question }) -> { question } | { error }
+- updateQuestion({ question, text }) -> { question } | { error }
+- addOption({ question, label }) -> { option } | { error }
+- deleteOption({ option }) -> { option } | { error }
+- updateOption({ option, label }) -> { option } | { error }
+
+Queries:
+- _getQuizzesByOwner({ owner }) -> [{ quiz, title }]
+- _getQuiz({ quiz }) -> [{ quiz, owner, title }]
+- _getQuestions({ quiz }) -> [{ question, text }]
+- _getOptions({ question }) -> [{ option, label }]
+- _getQuestion({ question }) -> [{ question, text, quiz }]
+
+State (MongoDB):
+- quizzes: { quiz, owner, title }
+- questions: { question, quiz, text }
+- options: { option, question, label }
+

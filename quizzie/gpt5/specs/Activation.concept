@@ -1,0 +1,20 @@
+Purpose: Manage question activation lifecycle and votes
+
+Actions:
+- activate({ question }) -> { activation } | { error }
+- deactivate({ activation }) -> { activation } | { error }
+- showResults({ activation }) -> { activation } | { error }
+- hideResults({ activation }) -> { activation } | { error }
+- vote({ activation, user, option }) -> { activation } | { error }
+
+Queries:
+- _getActivation({ activation }) -> [{ activation, question, isActive, showResults }]
+- _getActiveByQuestion({ question }) -> [{ activation, isActive, showResults }]
+- _getVotesByActivation({ activation }) -> [{ activation, user, option }]
+- _getVoteCounts({ activation }) -> [{ option, count, total }]
+- _getUserVote({ activation, user }) -> [{ option }]
+
+State (MongoDB):
+- activations: { activation, question, isActive, showResults }
+- votes: { activation, user, option }
+

@@ -1,0 +1,27 @@
+concept API
+
+purpose: Handle HTTP requests and responses for external clients to interact with the application
+
+principle:
+  External clients make HTTP requests that are processed asynchronously. Each request gets a unique ID and waits for a response to be generated. The API concept mediates between HTTP and the internal concept system.
+
+state:
+  requests: set Request
+  Request: (request: ID, method: String, path: String, input: Object, output: Object)
+
+actions:
+  request(method: String, path: String, input: Object): Request | Error
+    create new request with method, path, and input data
+    out: {request: ID}
+
+  respond(request: ID, output: Object): Request | Error
+    when request exists
+    set response output for request
+    out: {request: ID}
+
+queries:
+  _getRequest(request: ID): Request[]
+    return request details including any response
+
+  _waitForResponse(request: ID): Object
+    wait for and return response output for request

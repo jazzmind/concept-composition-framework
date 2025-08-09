@@ -1,0 +1,54 @@
+concept Activation
+
+purpose: Manage live quiz sessions where questions are activated for voting and results can be displayed
+
+principle:
+  Questions can be activated to create voting sessions. During an activation, users can vote on options, and results can be shown or hidden. Each activation tracks votes separately and can be controlled independently.
+
+state:
+  activations: set Activation
+  votes: set Vote
+  Activation: (activation: ID, question: ID, isActive: Boolean, showResults: Boolean)
+  Vote: (activation: ID, user: ID, option: ID)
+
+actions:
+  activate(question: ID): Activation | Error
+    create new activation for question in active state with results hidden
+    out: {activation: ID}
+
+  deactivate(activation: ID): Activation | Error
+    when activation exists
+    set activation as inactive (stops accepting new votes)
+    out: {activation: ID}
+
+  showResults(activation: ID): Activation | Error
+    when activation exists
+    enable results display for activation
+    out: {activation: ID}
+
+  hideResults(activation: ID): Activation | Error
+    when activation exists
+    disable results display for activation
+    out: {activation: ID}
+
+  vote(activation: ID, user: ID, option: ID): Vote | Error
+    when activation exists and is active
+    record or update user's vote for the activation
+    out: {activation: ID}
+
+queries:
+  _getActivation(activation: ID): Activation[]
+    return activation details
+
+  _getActiveByQuestion(question: ID): Activation[]
+    return currently active activations for question
+
+  _getVotesByActivation(activation: ID): Vote[]
+    return all votes for activation
+
+  _getVoteCounts(activation: ID): VoteCount[]
+    return vote counts per option for activation
+    VoteCount: (option: ID, count: Number, total: Number)
+
+  _getUserVote(activation: ID, user: ID): Vote[]
+    return user's current vote for activation, empty if none

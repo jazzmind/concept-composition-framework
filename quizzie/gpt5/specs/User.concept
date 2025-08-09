@@ -1,0 +1,14 @@
+Purpose: Manage users and their display names
+
+Actions:
+- register({ name }) -> { user } | { error }
+- updateName({ user, newName }) -> { user } | { error }
+
+Queries:
+- _getById({ user }) -> [{ user, name }]
+- _getByName({ name }) -> [{ user }]
+- _getAllUsers() -> [{ user, name }]
+
+State (MongoDB):
+- users: { user, name }
+

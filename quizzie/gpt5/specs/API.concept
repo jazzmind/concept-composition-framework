@@ -1,0 +1,12 @@
+Purpose: Handle external HTTP requests as concept actions and return outputs via respond.
+
+Actions:
+- request({ method, path, ...input }) -> { request }
+- respond({ request, output }) -> { request } | { error }
+
+Queries:
+- _getRequest({ request }) -> [{ request, method, path, input, output }]
+- _waitForResponse({ request }) -> [ { output } ]
+
+State: In-memory map of open requests by id
+

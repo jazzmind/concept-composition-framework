@@ -1,0 +1,157 @@
+---
+alwaysApply: true
+---
+
+# Development Workflow Rules
+
+## Concept-First Development Process
+
+### 1. Design Phase
+1. **Define Purpose**: Start with a clear, single-purpose statement
+2. **Specify State**: Use SSF (Simple State Form) to define data structure
+3. **Design Actions**: Define all input/output patterns and error cases
+4. **Add Queries**: Create pure functions for state access
+5. **Write Operational Principle**: Demonstrate how the concept fulfills its purpose
+
+### 2. Implementation Phase
+1. **Create Concept Class**: Implement in TypeScript following patterns
+2. **Set Up Database**: Configure MongoDB collections and indexes
+3. **Implement Actions**: Handle all specified input/output cases
+4. **Implement Queries**: Create pure, side-effect-free functions
+5. **Add Validation**: Validate inputs and handle edge cases
+
+### 3. Integration Phase
+1. **Design Synchronizations**: Define how concepts interact
+2. **Implement Syncs**: Use TypeScript sync patterns
+3. **Register Engine**: Set up concept registration and instrumentation
+4. **Create API Routes**: Generate Next.js routes for external access
+5. **Build UI Components**: Create React components that use the APIs
+
+### 4. Testing Strategy
+- **Unit Tests**: Test individual concept actions and queries
+- **Integration Tests**: Test synchronizations and concept interactions
+- **API Tests**: Test Next.js route handlers
+- **E2E Tests**: Test complete user workflows
+
+## Development Commands
+- `npm run api`: Start development server with auth bypass for testing
+- `npm run dev`: Start full development server
+- `npm run build`: Production build
+- `npm test`: Run test suite
+
+## Code Quality Standards
+- **TypeScript Strict**: Use strict type checking
+- **Error Handling**: Always return structured error objects
+- **Documentation**: Document concept purposes and complex synchronizations
+- **Validation**: Validate all inputs at concept boundaries
+
+## Database Management
+- **Never use `--force-reset`**: This flag will terminate the process
+- **Use `npx prisma db push`**: For schema updates (if using Prisma)
+- **MongoDB Collections**: One per concept, properly indexed
+- **Environment Variables**: All configuration via `.env.local`
+
+## Debugging Guidelines
+- **Engine Tracing**: Enable TRACE logging to see sync execution
+- **Concept Isolation**: Test concepts independently before integration
+- **Flow Analysis**: Use flow tokens to trace action sequences
+- **State Inspection**: Use queries to examine concept state
+
+## File Organization
+```
+├── .cursor/rules/          # Cursor AI rules (this directory)
+├── specs/                  # Concept specifications
+├── concepts/               # TypeScript implementations  
+├── syncs/                  # Synchronization definitions
+├── app/                    # Next.js application
+├── lib/sync/              # Engine configuration
+└── tests/                 # Test suites
+```
+
+## Anti-Patterns to Avoid
+- **Concept Dependencies**: Never import one concept from another
+- **Shared State**: Each concept manages its own state independently
+- **Direct Database Access**: Always go through concept actions/queries
+- **Synchronous Syncs**: Use async patterns for all concept operations
+- **Mock Data**: Never create fake or mock data unless explicitly requested
+
+## Reference Documentation
+- [Concept Design](rules/docs/concept-design.md)
+- [Debugging Guide](rules/docs/debugging.md)
+- [Development Examples](rules/evals/quizzie/)# Development Workflow Rules
+
+## Concept-First Development Process
+
+### 1. Design Phase
+1. **Define Purpose**: Start with a clear, single-purpose statement
+2. **Specify State**: Use SSF (Simple State Form) to define data structure
+3. **Design Actions**: Define all input/output patterns and error cases
+4. **Add Queries**: Create pure functions for state access
+5. **Write Operational Principle**: Demonstrate how the concept fulfills its purpose
+
+### 2. Implementation Phase
+1. **Create Concept Class**: Implement in TypeScript following patterns
+2. **Set Up Database**: Configure MongoDB collections and indexes
+3. **Implement Actions**: Handle all specified input/output cases
+4. **Implement Queries**: Create pure, side-effect-free functions
+5. **Add Validation**: Validate inputs and handle edge cases
+
+### 3. Integration Phase
+1. **Design Synchronizations**: Define how concepts interact
+2. **Implement Syncs**: Use TypeScript sync patterns
+3. **Register Engine**: Set up concept registration and instrumentation
+4. **Create API Routes**: Generate Next.js routes for external access
+5. **Build UI Components**: Create React components that use the APIs
+
+### 4. Testing Strategy
+- **Unit Tests**: Test individual concept actions and queries
+- **Integration Tests**: Test synchronizations and concept interactions
+- **API Tests**: Test Next.js route handlers
+- **E2E Tests**: Test complete user workflows
+
+## Development Commands
+- `npm run api`: Start development server with auth bypass for testing
+- `npm run dev`: Start full development server
+- `npm run build`: Production build
+- `npm test`: Run test suite
+
+## Code Quality Standards
+- **TypeScript Strict**: Use strict type checking
+- **Error Handling**: Always return structured error objects
+- **Documentation**: Document concept purposes and complex synchronizations
+- **Validation**: Validate all inputs at concept boundaries
+
+## Database Management
+- **Never use `--force-reset`**: This flag will terminate the process
+- **Use `npx prisma db push`**: For schema updates (if using Prisma)
+- **MongoDB Collections**: One per concept, properly indexed
+- **Environment Variables**: All configuration via `.env.local`
+
+## Debugging Guidelines
+- **Engine Tracing**: Enable TRACE logging to see sync execution
+- **Concept Isolation**: Test concepts independently before integration
+- **Flow Analysis**: Use flow tokens to trace action sequences
+- **State Inspection**: Use queries to examine concept state
+
+## File Organization
+```
+├── .cursor/rules/          # Cursor AI rules (this directory)
+├── specs/                  # Concept specifications
+├── concepts/               # TypeScript implementations  
+├── syncs/                  # Synchronization definitions
+├── app/                    # Next.js application
+├── lib/sync/              # Engine configuration
+└── tests/                 # Test suites
+```
+
+## Anti-Patterns to Avoid
+- **Concept Dependencies**: Never import one concept from another
+- **Shared State**: Each concept manages its own state independently
+- **Direct Database Access**: Always go through concept actions/queries
+- **Synchronous Syncs**: Use async patterns for all concept operations
+- **Mock Data**: Never create fake or mock data unless explicitly requested
+
+## Reference Documentation
+- [Concept Design](rules/docs/concept-design.md)
+- [Debugging Guide](rules/docs/debugging.md)
+- [Development Examples](rules/evals/quizzie/)

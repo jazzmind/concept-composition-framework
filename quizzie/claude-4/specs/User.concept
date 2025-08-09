@@ -1,0 +1,31 @@
+concept User
+
+purpose: Manage user accounts with unique identities
+
+principle:
+  After registering a user with a unique name, the user can be identified by their user ID or looked up by name. Users can update their name while maintaining their identity.
+
+state:
+  users: set User
+  User: (user: ID, name: String)
+
+actions:
+  register(name: String): User | Error
+    when name is not already taken
+    add User with new ID and given name
+    out: {user: ID}
+
+  updateName(user: ID, newName: String): User | Error
+    when user exists and newName is not taken by another user
+    update user's name to newName
+    out: {user: ID}
+
+queries:
+  _getById(user: ID): User[]
+    return user with given ID, empty if not found
+
+  _getByName(name: String): User[]
+    return user with given name, empty if not found
+
+  _getAllUsers(): User[]
+    return all registered users

@@ -1,0 +1,75 @@
+concept Quiz
+
+purpose: Organize questions and options into quizzes that users can create and manage
+
+principle:
+  Users create quizzes containing multiple questions, each with multiple choice options. Questions and options can be added, edited, and deleted. Quiz owners can manage their quiz content.
+
+state:
+  quizzes: set Quiz
+  questions: set Question  
+  options: set Option
+  Quiz: (quiz: ID, owner: ID, title: String)
+  Question: (question: ID, quiz: ID, text: String)
+  Option: (option: ID, question: ID, label: String)
+
+actions:
+  createQuiz(owner: ID, title: String): Quiz | Error
+    add new Quiz with given owner and title
+    out: {quiz: ID}
+
+  deleteQuiz(quiz: ID): Quiz | Error
+    when quiz exists
+    remove quiz and all its questions and options
+    out: {quiz: ID}
+
+  updateQuizTitle(quiz: ID, title: String): Quiz | Error
+    when quiz exists
+    update quiz title
+    out: {quiz: ID}
+
+  addQuestion(quiz: ID, text: String): Question | Error
+    when quiz exists
+    add new Question to quiz with given text
+    out: {question: ID}
+
+  deleteQuestion(question: ID): Question | Error
+    when question exists
+    remove question and all its options
+    out: {question: ID}
+
+  updateQuestion(question: ID, text: String): Question | Error
+    when question exists
+    update question text
+    out: {question: ID}
+
+  addOption(question: ID, label: String): Option | Error
+    when question exists
+    add new Option to question with given label
+    out: {option: ID}
+
+  deleteOption(option: ID): Option | Error
+    when option exists
+    remove option
+    out: {option: ID}
+
+  updateOption(option: ID, label: String): Option | Error
+    when option exists
+    update option label
+    out: {option: ID}
+
+queries:
+  _getQuizzesByOwner(owner: ID): Quiz[]
+    return all quizzes owned by user
+
+  _getQuiz(quiz: ID): Quiz[]
+    return quiz details
+
+  _getQuestions(quiz: ID): Question[]
+    return all questions in quiz, ordered by creation
+
+  _getOptions(question: ID): Option[]
+    return all options for question, ordered by creation
+
+  _getQuestion(question: ID): Question[]
+    return question details including quiz ID

@@ -9,8 +9,8 @@ alwaysApply: false
 ### Class Structure
 - Each concept is implemented as a single TypeScript class: `${ConceptName}Concept`
 - Place each concept in its own file: `concepts/${conceptName}.ts`
-- Use MongoDB for state persistence with the TypeScript MongoDB driver
-- Each concept gets its own MongoDB collection
+- Use Prisma for state persistence
+- Each concept gets its own database table via Prisma schema
 
 ### Action Implementation
 ```typescript
@@ -30,18 +30,18 @@ async _queryName(input: { key: Type }): Promise<Array<{ result: Type }>> {
 ```
 
 ### Database Configuration
-- Use environment variables for all MongoDB configuration
-- Share a single database between concepts but separate collections
-- Use MongoDB ObjectId for concept entity IDs
+- Use environment variables for all Prisma/PostgreSQL configuration
+- Share a single database between concepts but separate tables
+- Use Prisma's auto-generated IDs for concept entity IDs
 - Follow SSF (Simple State Form) translation rules for schema mapping
 
 ### Error Handling
 - Return `{ error: string }` objects instead of throwing exceptions
 - Validate inputs and return descriptive error messages
-- Handle MongoDB connection errors gracefully
+- Handle Prisma/PostgreSQL connection errors gracefully
 
 ### State Management
-- Initialize MongoDB connection in constructor
+- Initialize Prisma client in constructor
 - Use proper indexes for query performance
 - Implement proper cleanup in concept lifecycle
 
@@ -58,8 +58,8 @@ See [Concept Implementation Guide](rules/docs/concept-implementation.md) for det
 ### Class Structure
 - Each concept is implemented as a single TypeScript class: `${ConceptName}Concept`
 - Place each concept in its own file: `concepts/${conceptName}.ts`
-- Use MongoDB for state persistence with the TypeScript MongoDB driver
-- Each concept gets its own MongoDB collection
+- Use Prisma with PostgreSQL for state persistence
+- Each concept gets its own database table via Prisma schema
 
 ### Action Implementation
 ```typescript
@@ -79,18 +79,18 @@ async _queryName(input: { key: Type }): Promise<Array<{ result: Type }>> {
 ```
 
 ### Database Configuration
-- Use environment variables for all MongoDB configuration
-- Share a single database between concepts but separate collections
-- Use MongoDB ObjectId for concept entity IDs
+- Use environment variables for all Prisma/PostgreSQL configuration
+- Share a single database between concepts but separate tables
+- Use Prisma's auto-generated IDs for concept entity IDs
 - Follow SSF (Simple State Form) translation rules for schema mapping
 
 ### Error Handling
 - Return `{ error: string }` objects instead of throwing exceptions
 - Validate inputs and return descriptive error messages
-- Handle MongoDB connection errors gracefully
+- Handle Prisma/PostgreSQL connection errors gracefully
 
 ### State Management
-- Initialize MongoDB connection in constructor
+- Initialize Prisma client in constructor
 - Use proper indexes for query performance
 - Implement proper cleanup in concept lifecycle
 

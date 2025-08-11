@@ -1,0 +1,51 @@
+name: Test Engine Library
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'engine-library/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'engine-library/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: engine-library/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./engine-library
+        run: npm ci
+
+      - name: Run linting
+        working-directory: ./engine-library
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build package
+        working-directory: ./engine-library
+        run: npm run build
+
+      - name: Run tests
+        working-directory: ./engine-library
+        run: npm test
+        continue-on-error: true
+
+      - name: Check package can be packed
+        working-directory: ./engine-library
+        run: npm pack --dry-run

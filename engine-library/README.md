@@ -1,12 +1,22 @@
-# @concept-design/engine
+# @sonnenreich/concept-design-engine
 
 The official Concept Design Engine for Next.js applications. Build modular, maintainable applications using the Concept Design methodology.
 
 ## Installation
 
+### From GitHub Packages
+
 ```bash
-npm install @concept-design/engine
+# Configure npm to use GitHub Package Registry for @sonnenreich packages
+echo "@sonnenreich:registry=https://npm.pkg.github.com" >> .npmrc
+
+# Install the package
+npm install @sonnenreich/concept-design-engine
 ```
+
+### Alternative: Download from GitHub Releases
+
+You can also download the package directly from the [GitHub Releases](https://github.com/sonnenreich/concept/releases) page.
 
 ## Quick Start
 
@@ -16,7 +26,7 @@ npm install @concept-design/engine
 
 ```typescript
 // concepts/user.ts
-import { BaseMongoDBConcept } from '@concept-design/engine';
+import { BaseMongoDBConcept } from '@sonnenreich/concept-design-engine';
 
 export class UserConcept extends BaseMongoDBConcept {
     constructor(config: MongoDBConceptConfig) {
@@ -65,7 +75,7 @@ export class UserConcept extends BaseMongoDBConcept {
 
 ```typescript
 // concepts/user.ts
-import { BasePrismaConcept } from '@concept-design/engine';
+import { BasePrismaConcept } from '@sonnenreich/concept-design-engine';
 
 export class UserConcept extends BasePrismaConcept {
     constructor(config: PrismaConceptConfig = {}) {
@@ -119,7 +129,7 @@ export class UserConcept extends BasePrismaConcept {
 
 ```typescript
 // lib/engine.ts
-import { createNextJSEngine } from '@concept-design/engine';
+import { createNextJSEngine } from '@sonnenreich/concept-design-engine';
 import { UserConcept } from '@/concepts/user';
 
 const mongoConfig = {
@@ -139,7 +149,7 @@ export const engine = createNextJSEngine({
 
 ```typescript
 // lib/engine.ts
-import { createNextJSEngine } from '@concept-design/engine';
+import { createNextJSEngine } from '@sonnenreich/concept-design-engine';
 import { PrismaClient } from '@prisma/client';
 import { UserConcept } from '@/concepts/user';
 
@@ -157,7 +167,7 @@ export const engine = createNextJSEngine({
 
 ```typescript
 // app/api/[...path]/route.ts
-import { createAPIRoute } from '@concept-design/engine';
+import { createAPIRoute } from '@sonnenreich/concept-design-engine';
 import { engine } from '@/lib/engine';
 
 const handler = createAPIRoute(engine);
@@ -246,7 +256,7 @@ export default function RegisterPage() {
 
 ```typescript
 // syncs/user-welcome.ts
-import { actions, Frames, Vars } from '@concept-design/engine';
+import { actions, Frames, Vars } from '@sonnenreich/concept-design-engine';
 
 export const userWelcome = ({ input, output }: Vars) => ({
     when: actions(
@@ -268,7 +278,7 @@ export const userWelcome = ({ input, output }: Vars) => ({
 ### MongoDB Queries with Helpers
 
 ```typescript
-import { MongoDBQueryHelpers } from '@concept-design/engine';
+import { MongoDBQueryHelpers } from '@sonnenreich/concept-design-engine';
 
 async _searchUsers(input: { 
     name_contains?: string;
@@ -303,7 +313,7 @@ CONCEPT_TRACE=true  # Enable development tracing
 The engine is built with TypeScript and provides full type safety:
 
 ```typescript
-import type { NextJSEngine, MongoDBConcept } from '@concept-design/engine';
+import type { NextJSEngine, MongoDBConcept } from '@sonnenreich/concept-design-engine';
 
 // All concepts and actions are fully typed
 const result = await engine.concepts.User.register({

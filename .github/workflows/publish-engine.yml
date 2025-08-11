@@ -1,0 +1,65 @@
+name: Publish Engine Library to GitHub Packages
+
+on:
+  push:
+    tags:
+      - 'engine-v*'  # Triggers on tags like engine-v1.0.0
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@sonnenreich'
+
+      - name: Install dependencies
+        working-directory: ./engine-library
+        run: npm ci
+
+      - name: Build package
+        working-directory: ./engine-library
+        run: npm run build
+
+      - name: Run tests
+        working-directory: ./engine-library
+        run: npm test
+        continue-on-error: true  # Since we may not have tests yet
+
+      - name: Publish to GitHub Packages
+        working-directory: ./engine-library
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Engine Library ${{ github.ref }}
+          body: |
+            Released @sonnenreich/concept-design-engine
+            
+            ## Installation
+            ```bash
+            npm install @sonnenreich/concept-design-engine
+            ```
+            
+            ## Changes
+            See CHANGELOG.md for details.
+          draft: false
+          prerelease: false

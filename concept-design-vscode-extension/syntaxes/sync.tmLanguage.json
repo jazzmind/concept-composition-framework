@@ -1,0 +1,107 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Sync",
+  "patterns": [
+    {
+      "include": "#spec-wrapper"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#concepts"
+    },
+    {
+      "include": "#variables"
+    }
+  ],
+  "repository": {
+    "spec-wrapper": {
+      "name": "meta.spec-wrapper.sync",
+      "begin": "<sync_spec>",
+      "end": "</sync_spec>",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.tag.sync" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.tag.sync" }
+      },
+      "patterns": [
+        { "include": "#keywords" },
+        { "include": "#strings" },
+        { "include": "#comments" },
+        { "include": "#concepts" },
+        { "include": "#variables" }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.sync",
+          "match": "\\b(sync|when|where|then|export|function|const|return)\\b"
+        },
+        {
+          "name": "keyword.operator.sync",
+          "match": "\\b(actions|Frames|Vars)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.sync",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.sync",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.sync",
+          "begin": "//",
+          "end": "$"
+        },
+        {
+          "name": "comment.line.number-sign.sync",
+          "begin": "#",
+          "end": "$"
+        },
+        {
+          "name": "comment.block.sync",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "concepts": {
+      "patterns": [
+        {
+          "name": "entity.name.type.concept.sync",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\.[a-z][A-Za-z0-9_]*\\b"
+        },
+        {
+          "name": "entity.name.type.concept.sync",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\._[a-z][A-Za-z0-9_]*\\b"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.parameter.sync",
+          "match": "\\b[a-z][A-Za-z0-9_]*\\b"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.sync"
+}

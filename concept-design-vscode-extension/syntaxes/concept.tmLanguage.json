@@ -1,0 +1,115 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Concept",
+  "patterns": [
+    {
+      "include": "#spec-wrapper"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#identifiers"
+    }
+  ],
+  "repository": {
+    "spec-wrapper": {
+      "name": "meta.spec-wrapper.concept",
+      "begin": "<concept_spec>",
+      "end": "</concept_spec>",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.tag.concept" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.tag.concept" }
+      },
+      "patterns": [
+        { "include": "#keywords" },
+        { "include": "#strings" },
+        { "include": "#comments" },
+        { "include": "#types" },
+        { "include": "#identifiers" }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.concept",
+          "match": "\\b(concept|purpose|state|actions|queries|operational|principle)\\b"
+        },
+        {
+          "name": "keyword.type.concept",
+          "match": "\\b(String|Number|Boolean|Date|DateTime|Flag|ObjectId|Object)\\b"
+        },
+        {
+          "name": "keyword.modifier.concept",
+          "match": "\\b(optional|set|seq|of|with|element|a|an)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.concept",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.concept",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.concept",
+          "begin": "//",
+          "end": "$"
+        },
+        {
+          "name": "comment.line.number-sign.concept",
+          "begin": "#",
+          "end": "$"
+        },
+        {
+          "name": "comment.block.concept",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "entity.name.type.concept",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+        },
+        {
+          "name": "storage.type.concept",
+          "match": "\\[([A-Za-z0-9_]+)\\]"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "name": "variable.other.concept",
+          "match": "\\b[a-z][A-Za-z0-9_]*\\b"
+        },
+        {
+          "name": "support.function.concept",
+          "match": "\\b_[a-z][A-Za-z0-9_]*\\b"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.concept"
+}

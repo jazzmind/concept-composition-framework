@@ -1,0 +1,269 @@
+{
+  "name": "concept-design-tools",
+  "displayName": "Concept Design Tools",
+  "description": "Development tools for Concept Design applications - linting, validation, schema generation, and code generation",
+  "version": "0.1.0",
+  "publisher": "concept-design",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sonnenreich/concept"
+  },
+  "license": "MIT",
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Formatters",
+    "Other"
+  ],
+  "keywords": [
+    "concept-design",
+    "modular-programming",
+    "synchronization",
+    "typescript",
+    "prisma"
+  ],
+  "activationEvents": [
+    "onLanguage:concept",
+    "onLanguage:sync",
+    "workspaceContains:**/*.concept",
+    "workspaceContains:**/*.sync"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "concept",
+        "aliases": [
+          "Concept",
+          "concept"
+        ],
+        "extensions": [
+          ".concept"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "sync",
+        "aliases": [
+          "Sync",
+          "sync"
+        ],
+        "extensions": [
+          ".sync"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "concept",
+        "scopeName": "source.concept",
+        "path": "./syntaxes/concept.tmLanguage.json"
+      },
+      {
+        "language": "sync",
+        "scopeName": "source.sync",
+        "path": "./syntaxes/sync.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "concept-design.generateSchema",
+        "title": "Generate Prisma Schema",
+        "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.validateConcepts",
+        "title": "Validate Concept Alignment",
+        "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.validateConceptsWithAI",
+        "title": "Validate Concept Alignment (with AI)",
+        "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.generateCode",
+        "title": "Generate TypeScript Code",
+        "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.openValidationReport",
+        "title": "Open Last Validation Report",
+        "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.generateCursorRules",
+        "title": "Generate Cursor Rules (AI)",
+        "category": "Concept Design"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "concept-design.generateSchema",
+          "when": "explorerResourceIsFolder",
+          "group": "concept-design@1"
+        },
+        {
+          "command": "concept-design.validateConcepts",
+          "when": "explorerResourceIsFolder",
+          "group": "concept-design@2"
+        },
+        {
+          "command": "concept-design.generateCode",
+          "when": "explorerResourceIsFolder",
+          "group": "concept-design@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "concept-design.validateConcepts",
+          "when": "resourceExtname == .concept || resourceExtname == .sync",
+          "group": "concept-design@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "concept-design.generateSchema",
+          "when": "workspaceContains:**/*.concept"
+        },
+        {
+          "command": "concept-design.validateConcepts",
+          "when": "workspaceContains:**/*.concept"
+        },
+        {
+          "command": "concept-design.validateConceptsWithAI",
+          "when": "workspaceContains:**/*.concept"
+        },
+        {
+          "command": "concept-design.generateCode",
+          "when": "workspaceContains:**/*.concept"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "Concept Design Tools",
+      "properties": {
+        "conceptDesign.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API key for AI-powered features (can also use OPENAI_API_KEY environment variable)"
+        },
+        "conceptDesign.openai.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API key for cursor rules generation and AI analysis",
+          "scope": "application"
+        },
+        "conceptDesign.openai.model": {
+          "type": "string",
+          "default": "gpt-4-turbo-preview",
+          "enum": ["gpt-4-turbo-preview", "gpt-4", "gpt-3.5-turbo"],
+          "description": "OpenAI model to use for generating cursor rules"
+        },
+        "conceptDesign.directories.specs": {
+          "type": "string",
+          "default": "specs",
+          "description": "Directory containing .concept specification files"
+        },
+        "conceptDesign.directories.concepts": {
+          "type": "string",
+          "default": "concepts",
+          "description": "Directory containing TypeScript concept implementations"
+        },
+        "conceptDesign.directories.syncs": {
+          "type": "string",
+          "default": "syncs",
+          "description": "Directory containing synchronization files"
+        },
+        "conceptDesign.directories.schema": {
+          "type": "string",
+          "default": "prisma/schema.prisma",
+          "description": "Path to generated Prisma schema file"
+        },
+        "conceptDesign.validation.strictMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable strict validation mode for more rigorous checking"
+        },
+        "conceptDesign.validation.includeAIAnalysis": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include AI-powered analysis in validation (requires OpenAI API key)"
+        },
+        "conceptDesign.codeGeneration.overwriteExisting": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow overwriting existing TypeScript files during code generation"
+        },
+        "conceptDesign.codeGeneration.useMongoDb": {
+          "type": "boolean",
+          "default": false,
+          "description": "Generate code for MongoDB instead of PostgreSQL/Prisma"
+        },
+        "conceptDesign.linting.enableRealTime": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time linting and validation for .concept and .sync files"
+        }
+      }
+    },
+    "problemMatchers": [
+      {
+        "name": "concept-design",
+        "owner": "concept-design",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts --fix",
+    "lint:check": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "test:watch": "npm run compile && npm run test",
+    "clean": "rimraf out *.vsix",
+    "package": "npm run clean && npm run compile && vsce package",
+    "install-extension": "npm run package && code --install-extension *.vsix",
+    "check": "npm run lint:check && npm run test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
+    "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "^2.29.0",
+    "eslint": "^9.0.0",
+    "fast-glob": "^3.3.2",
+    "mocha": "^10.7.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "openai": "^4.104.0",
+    "vscode-languageclient": "^8.1.0",
+    "vscode-languageserver": "^8.1.0",
+    "vscode-languageserver-textdocument": "^1.0.8"
+  }
+}

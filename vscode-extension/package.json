@@ -61,8 +61,13 @@
     ],
     "commands": [
       {
+        "command": "concept-design.syncSchema",
+        "title": "Sync Prisma Schema with Concepts",
+        "category": "Concept Design"
+      },
+      {
         "command": "concept-design.generateSchema",
-        "title": "Generate Prisma Schema",
+        "title": "Generate Prisma Schema (Legacy)",
         "category": "Concept Design"
       },
       {
@@ -87,7 +92,7 @@
       },
       {
         "command": "concept-design.generateCursorRules",
-        "title": "Generate Cursor Rules (AI)",
+        "title": "Generate AI Rules",
         "category": "Concept Design"
       },
       {
@@ -104,6 +109,31 @@
         "command": "concept-design.toggleSyntaxSafeMode",
         "title": "Toggle Safe Syntax Highlighting",
         "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.validateConceptSpecs",
+        "title": "Validate Concept Specifications",
+        "category": "Concept Design Validation"
+      },
+      {
+        "command": "concept-design.validateSyncSpecs",
+        "title": "Validate Sync Specifications",
+        "category": "Concept Design Validation"
+      },
+      {
+        "command": "concept-design.validateConceptImplementation",
+        "title": "Validate Concept Implementation",
+        "category": "Concept Design Validation"
+      },
+      {
+        "command": "concept-design.validateSyncImplementation",
+        "title": "Validate Sync Implementation",
+        "category": "Concept Design Validation"
+      },
+      {
+        "command": "concept-design.validateFramework",
+        "title": "Validate Framework",
+        "category": "Concept Design Validation"
       }
     ],
     "menus": {
@@ -122,6 +152,21 @@
           "command": "concept-design.generateCode",
           "when": "explorerResourceIsFolder",
           "group": "concept-design@3"
+        },
+        {
+          "command": "concept-design.validateFramework",
+          "when": "explorerResourceIsFolder",
+          "group": "concept-design-validation@1"
+        },
+        {
+          "command": "concept-design.validateConceptSpecs",
+          "when": "explorerResourceIsFolder",
+          "group": "concept-design-validation@2"
+        },
+        {
+          "command": "concept-design.validateConceptImplementation",
+          "when": "explorerResourceIsFolder",
+          "group": "concept-design-validation@3"
         }
       ],
       "editor/context": [
@@ -146,6 +191,26 @@
         },
         {
           "command": "concept-design.generateCode",
+          "when": "workspaceContains:**/*.concept"
+        },
+        {
+          "command": "concept-design.validateConceptSpecs",
+          "when": "workspaceContains:**/*.concept"
+        },
+        {
+          "command": "concept-design.validateSyncSpecs",
+          "when": "workspaceContains:**/*.sync || workspaceContains:**/*.ts"
+        },
+        {
+          "command": "concept-design.validateConceptImplementation",
+          "when": "workspaceContains:**/*.concept && workspaceContains:**/*.ts"
+        },
+        {
+          "command": "concept-design.validateSyncImplementation",
+          "when": "workspaceContains:**/*.sync || workspaceContains:**/*.ts"
+        },
+        {
+          "command": "concept-design.validateFramework",
           "when": "workspaceContains:**/*.concept"
         }
       ]

@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import OpenAI from 'openai';
+import { SchemaGenerator } from './database/schema';
+import { CompilerConcept } from './rules/rulesGenerator';
 
 const execAsync = promisify(exec);
 
@@ -17,7 +19,83 @@ export class ConceptDesignCommands {
     }
 
     /**
-     * Generate Prisma schema from .concept files
+     * Sync Prisma schema with concept specifications
+     */
+    async syncSchema(): Promise<void> {
+        try {
+            this.outputChannel.show();
+            this.outputChannel.appendLine('🔄 Syncing Prisma schema with concept specifications...');
+
+            const workspaceFolder = this.getWorkspaceFolder();
+            if (!workspaceFolder) return;
+
+            // Get user to select directories
+            const specsDir = await this.selectSpecsDirectory(workspaceFolder);
+            if (!specsDir) return;
+
+            const schemaPath = await this.selectSchemaPath(workspaceFolder);
+            if (!schemaPath) return;
+
+            // Check if specs directory exists and has concept files
+            if (!fs.existsSync(specsDir)) {
+                vscode.window.showErrorMessage(`Specs directory not found: ${specsDir}`);
+                return;
+            }
+
+            const conceptFiles = fs.readdirSync(specsDir).filter(file => file.endsWith('.concept'));
+            if (conceptFiles.length === 0) {
+                vscode.window.showWarningMessage(`No .concept files found in: ${specsDir}`);
+                return;
+            }
+
+            this.outputChannel.appendLine(`📦 Found ${conceptFiles.length} concept files in ${specsDir}`);
+
+            // Ensure schema directory exists
+            const schemaDir = path.dirname(schemaPath);
+            if (!fs.existsSync(schemaDir)) {
+                fs.mkdirSync(schemaDir, { recursive: true });
+                this.outputChannel.appendLine(`📁 Created directory: ${schemaDir}`);
+            }
+
+            // Generate schema using the SchemaGenerator
+            const generator = new SchemaGenerator(specsDir, schemaPath);
+            
+            // Check if schema already exists
+            const schemaExists = fs.existsSync(schemaPath);
+            if (schemaExists) {
+                const overwrite = await vscode.window.showQuickPick(
+                    ['Yes, overwrite existing schema', 'No, cancel operation'],
+                    {
+                        placeHolder: 'Schema file already exists. Overwrite it?',
+                        canPickMany: false
+                    }
+                );
+                
+                if (!overwrite || overwrite === 'No, cancel operation') {
+                    this.outputChannel.appendLine('❌ Operation cancelled by user');
+                    return;
+                }
+            }
+
+            // Generate the schema
+            generator.writeSchema();
+            
+            this.outputChannel.appendLine('✅ Schema sync completed successfully');
+            vscode.window.showInformationMessage('Prisma schema synced with concept specifications!');
+            
+            // Open the generated/updated schema
+            const schemaUri = vscode.Uri.file(schemaPath);
+            await vscode.window.showTextDocument(schemaUri);
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.outputChannel.appendLine(`❌ Schema sync failed: ${errorMessage}`);
+            vscode.window.showErrorMessage(`Schema sync failed: ${errorMessage}`);
+        }
+    }
+
+    /**
+     * Generate Prisma schema from .concept files (legacy method)
      */
     async generateSchema(): Promise<void> {
         try {
@@ -541,16 +619,16 @@ export const ${syncName} = ({ input, output }: Vars) => ({
     }
 
     /**
-     * Generate cursor rules interactively using OpenAI
+     * Generate AI rules interactively using OpenAI
      */
     async generateCursorRules(): Promise<void> {
         try {
             this.outputChannel.show();
-            this.outputChannel.appendLine('🤖 Starting interactive cursor rules generation...');
+            this.outputChannel.appendLine('🤖 Starting interactive AI rules generation...');
 
             // Check for OpenAI API key
             const config = vscode.workspace.getConfiguration('conceptDesign');
-            const apiKey = config.get<string>('openai.apiKey');
+            let apiKey = config.get<string>('openai.apiKey') || process.env.OPENAI_API_KEY;
             
             if (!apiKey) {
                 const inputKey = await vscode.window.showInputBox({
@@ -560,10 +638,11 @@ export const ${syncName} = ({ input, output }: Vars) => ({
                 });
                 
                 if (!inputKey) {
-                    vscode.window.showWarningMessage('OpenAI API key required for cursor rules generation');
+                    vscode.window.showWarningMessage('OpenAI API key required for AI rules generation');
                     return;
                 }
                 
+                apiKey = inputKey;
                 // Save the key to configuration
                 await config.update('openai.apiKey', inputKey, vscode.ConfigurationTarget.Global);
             }
@@ -571,250 +650,261 @@ export const ${syncName} = ({ input, output }: Vars) => ({
             const workspaceFolder = this.getWorkspaceFolder();
             if (!workspaceFolder) return;
 
-            // Interactive prompts for framework and tooling selection
-            const frameworkOptions = await this.getFrameworkSelection();
-            if (!frameworkOptions) return;
+            // Interactive selection for tool, stack, and target directory
+            const toolSelection = await this.getToolSelection();
+            if (!toolSelection) return;
 
-            const toolingOptions = await this.getToolingSelection();
-            if (!toolingOptions) return;
+            const stackSelection = await this.getStackSelection();
+            if (!stackSelection) return;
 
-            // Generate the prompt and call OpenAI
-            const prompt = this.generateRulesPrompt(frameworkOptions, toolingOptions);
-            this.outputChannel.appendLine('📝 Generated prompt for OpenAI...');
+            const targetDirectory = await this.getTargetDirectory(workspaceFolder, toolSelection.name);
+            if (!targetDirectory) return;
 
-            const rules = await this.callOpenAI(prompt, apiKey || config.get<string>('openai.apiKey')!);
-            if (!rules) return;
+            const fromSelection = await this.getFromSelection();
+            if (!fromSelection) return;
 
-            // Install the generated rules
-            await this.installCursorRules(workspaceFolder, rules);
+            this.outputChannel.appendLine(`🔧 Configuration:`);
+            this.outputChannel.appendLine(`   Tool: ${toolSelection.label}`);
+            this.outputChannel.appendLine(`   Stack: ${stackSelection.label}`);
+            this.outputChannel.appendLine(`   Target: ${targetDirectory}`);
+            this.outputChannel.appendLine(`   Source: ${fromSelection}`);
+
+            // Generate rules using the abstracted generator
+            const generator = new CompilerConcept();
+
+            const result = await generator.generateRules({
+                target: toolSelection.name,
+                stack: stackSelection.name,
+                from: fromSelection as 'framework' | 'docs',
+                targetDirectory,
+                openaiApiKey: apiKey,
+                modelName: config.get('openai.model', 'gpt-4')
+            });
+
+            if (!result.success) {
+                throw new Error(result.error || 'Rules generation failed');
+            }
+
+            this.outputChannel.appendLine(`✅ Generated ${result.files.length} files:`);
+            result.files.forEach(file => {
+                this.outputChannel.appendLine(`   📄 ${file}`);
+            });
             
-            vscode.window.showInformationMessage('✅ Cursor rules generated and installed successfully!');
-            this.outputChannel.appendLine('✅ Cursor rules generation completed successfully');
+            vscode.window.showInformationMessage(`✅ AI rules generated successfully! Created ${result.files.length} files.`);
+
+            // Open the main rules file
+            if (result.files.length > 0) {
+                const mainFile = result.files.find(f => f.includes('README.md')) || result.files[0];
+                const uri = vscode.Uri.file(mainFile);
+                await vscode.window.showTextDocument(uri);
+            }
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            vscode.window.showErrorMessage(`Failed to generate cursor rules: ${errorMessage}`);
+            vscode.window.showErrorMessage(`Failed to generate AI rules: ${errorMessage}`);
             this.outputChannel.appendLine(`❌ Error: ${errorMessage}`);
         }
     }
 
-    private async getFrameworkSelection(): Promise<{framework: string, version: string} | null> {
-        const frameworks = [
-            { label: 'Next.js 15', value: 'nextjs-15' },
-            { label: 'Next.js 14', value: 'nextjs-14' },
-            { label: 'SvelteKit 2', value: 'sveltekit-2' },
-            { label: 'SvelteKit 1', value: 'sveltekit-1' },
-            { label: 'Node.js + Express', value: 'node-express' },
-            { label: 'Deno + Fresh', value: 'deno-fresh' },
-            { label: 'Bun + Hono', value: 'bun-hono' }
-        ];
+    /**
+     * Get tool selection from user
+     */
+    private async getToolSelection(): Promise<{ name: string; label: string; description: string } | null> {
+        const tools = CompilerConcept.getAvailableTools();
 
-        const selected = await vscode.window.showQuickPick(frameworks, {
-            placeHolder: 'Select your framework and version',
+        const options = tools.map(tool => ({
+            label: tool.label,
+            description: tool.description,
+            detail: tool.name
+        }));
+
+        const selected = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Select target AI tool for rules generation',
+            matchOnDescription: true,
             canPickMany: false
         });
 
         if (!selected) return null;
 
-        const [framework, version] = selected.value.split('-');
-        return { framework, version };
+        return tools.find(tool => tool.name === selected.detail)!;
     }
 
-    private async getToolingSelection(): Promise<{[key: string]: string} | null> {
-        const categories = [
+    /**
+     * Get stack selection from user
+     */
+    private async getStackSelection(): Promise<{ name: string; label: string; description: string } | null> {
+        const stacks = CompilerConcept.getAvailableStacks();
+
+        const options = stacks.map(stack => ({
+            label: stack.label,
+            description: stack.description,
+            detail: stack.name
+        }));
+
+        const selected = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Select technology stack',
+            matchOnDescription: true,
+            canPickMany: false
+        });
+
+        if (!selected) return null;
+
+        return stacks.find(stack => stack.name === selected.detail)!;
+    }
+
+    /**
+     * Get target directory from user
+     */
+    private async getTargetDirectory(workspaceFolder: string, toolName: string): Promise<string | null> {
+        const defaultPaths: Record<string, string> = {
+            'cursor': '.cursor/rules',
+            'claude-code': '.',
+            'windsurf': '.windsurf/rules',
+            'copilot': '.github',
+            'codeium': '.codeium',
+            'custom': 'ai-rules'
+        };
+
+        const defaultPath = defaultPaths[toolName] || 'ai-rules';
+        const fullDefaultPath = path.join(workspaceFolder, defaultPath);
+
+        const options = [
             {
-                name: 'AI/LLM Framework',
-                options: [
-                    { label: 'LangChain', value: 'langchain' },
-                    { label: 'LlamaIndex', value: 'llamaindex' },
-                    { label: 'Vercel AI SDK', value: 'vercel-ai' },
-                    { label: 'OpenAI SDK only', value: 'openai-sdk' },
-                    { label: 'None', value: 'none' }
-                ]
+                label: `📁 ${defaultPath}/ (recommended)`,
+                description: 'Use the standard location for this tool',
+                value: fullDefaultPath
             },
             {
-                name: 'CSS Framework',
-                options: [
-                    { label: 'Tailwind CSS', value: 'tailwind' },
-                    { label: 'CSS Modules', value: 'css-modules' },
-                    { label: 'Styled Components', value: 'styled-components' },
-                    { label: 'Vanilla CSS', value: 'vanilla-css' }
-                ]
-            },
-            {
-                name: 'UI Components',
-                options: [
-                    { label: 'shadcn/ui', value: 'shadcn' },
-                    { label: 'Radix UI', value: 'radix' },
-                    { label: 'Headless UI', value: 'headless-ui' },
-                    { label: 'Material UI', value: 'mui' },
-                    { label: 'Custom components', value: 'custom' }
-                ]
-            },
-            {
-                name: 'Database',
-                options: [
-                    { label: 'Prisma + PostgreSQL', value: 'prisma-postgres' },
-                    { label: 'Prisma + SQLite', value: 'prisma-sqlite' },
-                    { label: 'MongoDB + Mongoose', value: 'mongodb-mongoose' },
-                    { label: 'Supabase', value: 'supabase' },
-                    { label: 'PlanetScale', value: 'planetscale' }
-                ]
+                label: '🔍 Browse for directory...',
+                description: 'Select a custom directory',
+                value: 'browse'
             }
         ];
 
-        const selections: {[key: string]: string} = {};
+        const selected = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Select target directory for generated rules',
+            canPickMany: false
+        });
 
-        for (const category of categories) {
-            const selected = await vscode.window.showQuickPick(category.options, {
-                placeHolder: `Select ${category.name}`,
-                canPickMany: false
+        if (!selected) return null;
+
+        if (selected.value === 'browse') {
+            const browsed = await vscode.window.showOpenDialog({
+                canSelectFiles: false,
+                canSelectFolders: true,
+                canSelectMany: false,
+                defaultUri: vscode.Uri.file(workspaceFolder),
+                title: 'Select target directory for AI rules'
             });
 
-            if (!selected) return null;
-            selections[category.name.toLowerCase().replace(/[^a-z]/g, '')] = selected.value;
+            return browsed ? browsed[0].fsPath : null;
         }
 
-        return selections;
+        return selected.value;
     }
 
-    private generateRulesPrompt(framework: {framework: string, version: string}, tooling: {[key: string]: string}): string {
-        return `# Cursor Rules Generation Request
-
-Create comprehensive Cursor IDE rules for a Concept Design project using the following stack:
-
-## Framework & Version
-- **Framework**: ${framework.framework}
-- **Version**: ${framework.version}
-
-## Selected Tooling
-${Object.entries(tooling).map(([category, tool]) => `- **${category}**: ${tool}`).join('\n')}
-
-## Requirements
-
-Generate rules that should be placed in \`.cursor/rules/\` directory with the following files:
-
-1. **concept-design.md** - Core concept design principles and patterns
-2. **framework-integration.md** - How to integrate concepts with ${framework.framework} ${framework.version}
-3. **tooling-setup.md** - Configuration and best practices for the selected tools
-4. **development-workflow.md** - Step-by-step development process
-5. **code-patterns.md** - Common patterns and examples
-
-## Key Principles to Include
-
-- Concept Design methodology (single-purpose, independent concepts)
-- Actions take single input/output objects with error handling
-- Queries are pure functions returning arrays with underscore prefix
-- Synchronizations connect concepts without direct dependencies
-- ${framework.framework}-specific patterns for API routes and components
-- Integration patterns for ${tooling.aillmframework || 'AI frameworks'}
-- Database patterns for ${tooling.database || 'selected database'}
-- UI component patterns for ${tooling.uicomponents || 'selected UI library'}
-
-## Output Format
-
-Provide the content for each file in markdown format, clearly separated with file headers.
-Make the rules practical, actionable, and specific to the selected stack.
-Include code examples and best practices for each technology.
-Focus on how to implement the Concept Design methodology with this specific tech stack.
-
-Generate comprehensive, production-ready cursor rules now.`;
-    }
-
-    private async callOpenAI(prompt: string, apiKey: string): Promise<string | null> {
-        try {
-            this.outputChannel.appendLine('🔄 Calling OpenAI API with GPT-4...');
-            
-            const openai = new OpenAI({ apiKey });
-            
-            // Get the configured model
-            const configuredModel = vscode.workspace.getConfiguration('conceptDesign').get('openai.model', 'gpt-4.1');
-            
-            const response = await openai.chat.completions.create({
-                model: configuredModel,
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are an expert in software architecture and development tooling. Generate comprehensive, practical cursor rules for development teams.'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                max_tokens: 4000,
-                temperature: 0.7
-            });
-
-            const content = response.choices[0]?.message?.content;
-            if (!content) {
-                throw new Error('No content received from OpenAI API');
+    /**
+     * Get source selection (framework vs docs)
+     */
+    private async getFromSelection(): Promise<string | null> {
+        const options = [
+            {
+                label: 'Framework Specs',
+                description: 'Generate from framework specifications (more comprehensive)',
+                detail: 'framework'
+            },
+            {
+                label: 'Documentation',
+                description: 'Generate from documentation and best practices (faster)',
+                detail: 'docs'
             }
+        ];
 
-            this.outputChannel.appendLine('✅ Received response from OpenAI');
-            return content;
+        const selected = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Select generation source',
+            canPickMany: false
+        });
 
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            this.outputChannel.appendLine(`❌ OpenAI API Error: ${errorMessage}`);
-            vscode.window.showErrorMessage(`OpenAI API Error: ${errorMessage}`);
-            return null;
-        }
+        return selected?.detail || null;
     }
 
-    private async installCursorRules(workspaceFolder: string, rulesContent: string): Promise<void> {
-        const cursorRulesDir = path.join(workspaceFolder, '.cursor', 'rules');
+
+
+    /**
+     * Let user select the specs directory
+     */
+    private async selectSpecsDirectory(workspaceFolder: string): Promise<string | undefined> {
+        const config = vscode.workspace.getConfiguration('conceptDesign');
+        const defaultSpecsDir = config.get('directories.specs', 'specs');
         
-        // Ensure the .cursor/rules directory exists
-        if (!fs.existsSync(cursorRulesDir)) {
-            fs.mkdirSync(cursorRulesDir, { recursive: true });
-            this.outputChannel.appendLine(`📁 Created directory: ${cursorRulesDir}`);
+        // Common specs directory options
+        const options = [
+            { label: `📁 ${defaultSpecsDir}/ (default from config)`, value: path.join(workspaceFolder, defaultSpecsDir) },
+            { label: '📁 specs/', value: path.join(workspaceFolder, 'specs') },
+            { label: '📁 src/specs/', value: path.join(workspaceFolder, 'src', 'specs') },
+            { label: '📁 concepts/', value: path.join(workspaceFolder, 'concepts') },
+            { label: '🔍 Browse for directory...', value: 'browse' }
+        ];
+
+        const selected = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Select the directory containing your .concept files',
+            canPickMany: false
+        });
+
+        if (!selected) return undefined;
+
+        if (selected.value === 'browse') {
+            const browsed = await vscode.window.showOpenDialog({
+                canSelectFiles: false,
+                canSelectFolders: true,
+                canSelectMany: false,
+                defaultUri: vscode.Uri.file(workspaceFolder),
+                title: 'Select specs directory'
+            });
+            
+            return browsed ? browsed[0].fsPath : undefined;
         }
 
-        // Parse the content and extract individual files
-        const files = this.parseRulesContent(rulesContent);
-        
-        for (const [filename, content] of Object.entries(files)) {
-            const filePath = path.join(cursorRulesDir, filename);
-            fs.writeFileSync(filePath, content, 'utf-8');
-            this.outputChannel.appendLine(`📄 Created: ${filename}`);
-        }
-
-        // Create an index file that references all rules
-        const indexContent = `# Cursor Rules Index
-
-This directory contains Concept Design rules generated for this project.
-
-## Files
-
-${Object.keys(files).map(filename => `- [${filename}](./${filename})`).join('\n')}
-
-Generated on: ${new Date().toISOString()}
-`;
-        
-        fs.writeFileSync(path.join(cursorRulesDir, 'README.md'), indexContent, 'utf-8');
-        this.outputChannel.appendLine('📄 Created: README.md');
+        return selected.value;
     }
 
-    private parseRulesContent(content: string): {[filename: string]: string} {
-        const files: {[filename: string]: string} = {};
+    /**
+     * Let user select the schema file path
+     */
+    private async selectSchemaPath(workspaceFolder: string): Promise<string | undefined> {
+        const config = vscode.workspace.getConfiguration('conceptDesign');
+        const defaultSchemaPath = config.get('directories.schema', 'prisma/schema.prisma');
         
-        // Try to extract files based on markdown headers
-        const filePattern = /^#\s+(.+\.md)[\r\n]+([\s\S]*?)(?=^#\s+.+\.md|$)/gm;
-        let match;
-        
-        while ((match = filePattern.exec(content)) !== null) {
-            const filename = match[1].trim();
-            const fileContent = match[2].trim();
-            files[filename] = fileContent;
+        // Common schema file locations
+        const options = [
+            { label: `📄 ${defaultSchemaPath} (default from config)`, value: path.join(workspaceFolder, defaultSchemaPath) },
+            { label: '📄 prisma/schema.prisma', value: path.join(workspaceFolder, 'prisma', 'schema.prisma') },
+            { label: '📄 src/prisma/schema.prisma', value: path.join(workspaceFolder, 'src', 'prisma', 'schema.prisma') },
+            { label: '📄 schema.prisma (root)', value: path.join(workspaceFolder, 'schema.prisma') },
+            { label: '🔍 Browse for file...', value: 'browse' }
+        ];
+
+        const selected = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Select where to save the Prisma schema file',
+            canPickMany: false
+        });
+
+        if (!selected) return undefined;
+
+        if (selected.value === 'browse') {
+            const browsed = await vscode.window.showSaveDialog({
+                defaultUri: vscode.Uri.file(path.join(workspaceFolder, 'prisma', 'schema.prisma')),
+                filters: {
+                    'Prisma Schema': ['prisma'],
+                    'All Files': ['*']
+                },
+                title: 'Save Prisma schema as...'
+            });
+            
+            return browsed ? browsed.fsPath : undefined;
         }
-        
-        // If no files were parsed, create a single comprehensive rules file
-        if (Object.keys(files).length === 0) {
-            files['concept-design-rules.md'] = content;
-        }
-        
-        return files;
+
+        return selected.value;
     }
 
     /**

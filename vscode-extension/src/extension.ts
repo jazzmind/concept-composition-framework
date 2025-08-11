@@ -4,6 +4,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } f
 
 import { ConceptDesignCommands } from './commands';
 import { ConceptDesignProvider } from './providers';
+import { ValidationCommands } from './validation/validation-commands';
 
 let client: LanguageClient;
 
@@ -76,16 +77,21 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize command handlers and providers only if needed
     let commands: ConceptDesignCommands | undefined;
+    let validationCommands: ValidationCommands | undefined;
     let providers: ConceptDesignProvider | undefined;
 
     if (commandsEnabled) {
         commands = new ConceptDesignCommands(context);
+        validationCommands = new ValidationCommands(context);
+        validationCommands.registerCommands();
         
         // Register feature toggle commands
         // Note: Toggle commands removed as requested by user
 
         // Register main commands
         disposables.push(
+            vscode.commands.registerCommand('concept-design.syncSchema', 
+                () => commands!.syncSchema()),
             vscode.commands.registerCommand('concept-design.generateSchema', 
                 () => commands!.generateSchema()),
             vscode.commands.registerCommand('concept-design.validateConcepts', 

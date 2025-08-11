@@ -1,0 +1,10 @@
+{
+  "openaiApiKey": "",
+  "modelName": "gpt-4",
+  "projectRoot": "/Users/wessonnenreich/Code/practera/projecthub/src",
+  "specDir": "specs",
+  "conceptDir": "lib/concepts",
+  "syncDir": "lib/syncs",
+  "includeAiAnalysis": false,
+  "strictMode": false
+}

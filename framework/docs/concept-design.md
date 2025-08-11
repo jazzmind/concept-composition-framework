@@ -1,20 +1,41 @@
 # Building Applications with Concept Design
 
-This repository is an application meant to be built according to the principles
-of concept design, a new approach to modularity first introduced in Daniel
-Jackson's "The Essence of Software". This approach describes a way to build
-software in terms of _concepts_, which describe behavior that captures a
-familiar unit of functionality with a single purpose. These are then composed
-together using _synchronizations_, which are declarative statements that
-describe how actions of different concepts are composed.
+This repository demonstrates how to build applications using **Concept Design**, a revolutionary approach to software modularity introduced by Daniel Jackson in "The Essence of Software". This methodology addresses the core problems that make software brittle, complex, and difficult for both humans and AI systems to understand and modify.
+
+## Why Concept Design?
+
+Modern software development faces critical challenges:
+- **Brittleness**: Small changes risk breaking everything
+- **Poor Organization**: Code structure doesn't match user-facing behavior
+- **Needless Complexity**: Features are scattered across multiple layers
+- **LLM Limitations**: AI coding assistants struggle with large, entangled codebases
+
+Concept Design solves these problems through:
+- **Transparency**: Clear mapping between code and behavior
+- **Modularity**: Each feature in its own independent module
+- **Incrementality**: Safe, isolated changes that don't propagate
+- **AI-Friendly Structure**: Clear boundaries that LLMs can understand and work with
+
+This approach describes software in terms of _concepts_ - coherent units of behavior that capture familiar functionality with a single purpose. These are composed using _synchronizations_ - declarative statements that describe how concept actions interact.
 
 # Concepts
 
-A concept is a highly-reusable and standalone service designed to fulfill a
-single purpose. Unlike microservices or traditional OOP classes, concepts
-**must** remain independent from one another and cannot import or reference
-other concepts. They can be specified using a simple specification language and
-stored as `.concept` files, such as:
+A concept is a **coherent unit of behavior** that serves as:
+- A **user-facing behavioral pattern** that users recognize and understand
+- A **backend nano-service** with a clean API
+- A **reusable module** that can work across different applications
+- An **independent component** designed, coded, and explained in isolation
+
+Unlike microservices or traditional OOP classes, concepts **must** remain completely independent from one another. This independence is what makes software transparent and prevents the propagation of changes that leads to brittleness.
+
+## Concept Independence Rules
+
+1. **No Cross-Concept Imports**: Concepts cannot import or reference other concepts
+2. **No Shared Types**: Concepts cannot assume external type definitions
+3. **No Direct Calls**: One concept cannot directly call another's methods
+4. **Pure Interfaces**: All concept interaction happens through synchronizations
+
+Concepts can be specified using a simple specification language and stored as `.concept` files, such as:
 
 ```
 <concept_spec>
@@ -86,8 +107,21 @@ operational principle
 
 ## Designing Concepts
 
-The `User` concept example above highlights a number of key considerations when
-designing concepts:
+### The Modularity Principle
+
+Traditional object-oriented design often conflates multiple concerns. For example, a typical `User` class might handle:
+- **Authentication** (passwords, login/logout)
+- **Profile Management** (bio, avatar, preferences) 
+- **Social Features** (following, blocking)
+- **Identity** (username, email)
+
+This creates brittleness because changes to authentication logic might break profile features. In concept design, each of these becomes a separate concept:
+- `User` concept: Core identity mapping
+- `Authentication` concept: Password management and verification
+- `Profile` concept: User information and customization
+- `Following` concept: Social relationship management
+
+The `User` concept example above highlights key design considerations:
 
 - **Single, focused purpose:** A typical User service or class might contain a
   lot more kinds of information pertaining to users, such as passwords
@@ -122,16 +156,45 @@ designing concepts:
 
 # Synchronizations
 
-The idea of purely independent modules serving single purposes is both appealing
-and very old - why aren't more applications built in a similar fashion? As with
-any application of non-trivial size, structures for software today inevitably
-result in complicated dependency structures, build systems, and other layers of
-abstraction that entangle otherwise independent pieces. _Synchronizations_ are a
-new mechanism for composition that enable a very granular and incremental way to
-specify composite behavior between completely independent components like
-concepts. The tradeoff is the need to explicitly specify all conditions and
-paths of execution, but you gain the ability to modify exactly the behavior you
-are targeting without affecting the integrity of the rest of the system.
+The challenge with truly independent modules is composition: how do you make them work together without creating dependencies? Traditional approaches inevitably lead to:
+- Complicated dependency structures
+- Brittle build systems  
+- Layers of abstraction that entangle components
+- Changes that propagate unpredictably
+
+**Synchronizations** solve this through a declarative composition mechanism that:
+- Maintains complete concept independence
+- Enables granular, incremental behavior specification
+- Provides explicit control over all execution paths
+- Allows surgical modifications without system-wide effects
+
+## Real-World Example: URL Shortening Service
+
+Consider building a URL shortening service like bit.ly. Rather than a monolithic approach, we can decompose this into independent concepts:
+
+- `UrlShortening`: Core shortening and lookup functionality
+- `NonceGenerator`: Unique string generation within contexts
+- `ExpiringResource`: Automatic resource expiration
+- `WebAnalytics`: Visit tracking and statistics
+
+Each concept works independently, but synchronizations coordinate their behavior:
+
+```
+sync generateNonce
+when Web.request (method: "shortenUrl", shortUrlBase)
+then NonceGenerator.generate (context: shortUrlBase)
+
+sync registerShort  
+when Web.request (method: "shortenUrl", targetUrl, shortUrlBase)
+     NonceGenerator.generate (): (nonce)
+then UrlShortening.register (shortUrlSuffix: nonce, shortUrlBase, targetUrl)
+
+sync setExpiry
+when UrlShortening.register (): (shortUrl)
+then ExpiringResource.setExpiry (resource: shortUrl, seconds: 3600)
+```
+
+This approach provides incredible flexibility - you can add analytics, remove expiration, or change nonce generation without touching the core shortening logic.
 
 Consider three very simple concepts:
 

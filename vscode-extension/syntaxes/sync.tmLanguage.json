@@ -9,16 +9,13 @@
       "include": "#keywords"
     },
     {
-      "include": "#strings"
-    },
-    {
       "include": "#comments"
     },
     {
-      "include": "#concepts"
+      "include": "#strings"
     },
     {
-      "include": "#variables"
+      "include": "#simple-identifiers"
     }
   ],
   "repository": {
@@ -34,21 +31,37 @@
       },
       "patterns": [
         { "include": "#keywords" },
-        { "include": "#strings" },
         { "include": "#comments" },
-        { "include": "#concepts" },
-        { "include": "#variables" }
+        { "include": "#strings" },
+        { "include": "#simple-identifiers" }
       ]
     },
     "keywords": {
       "patterns": [
         {
           "name": "keyword.control.sync",
-          "match": "\\b(sync|when|where|then|export|function|const|return)\\b"
+          "match": "^\\s*(sync|when|where|then)\\b"
         },
         {
           "name": "keyword.operator.sync",
           "match": "\\b(actions|Frames|Vars)\\b"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.sync",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.line.number-sign.sync", 
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.block.sync",
+          "begin": "/\\*",
+          "end": "\\*/"
         }
       ]
     },
@@ -63,42 +76,19 @@
         }
       ]
     },
-    "comments": {
-      "patterns": [
-        {
-          "name": "comment.line.double-slash.sync",
-          "begin": "//",
-          "end": "$"
-        },
-        {
-          "name": "comment.line.number-sign.sync",
-          "begin": "#",
-          "end": "$"
-        },
-        {
-          "name": "comment.block.sync",
-          "begin": "/\\*",
-          "end": "\\*/"
-        }
-      ]
-    },
-    "concepts": {
+    "simple-identifiers": {
       "patterns": [
         {
           "name": "entity.name.type.concept.sync",
-          "match": "\\b[A-Z][A-Za-z0-9_]*\\.[a-z][A-Za-z0-9_]*\\b"
+          "match": "\\b[A-Z]\\w*\\.[a-z]\\w*\\b"
         },
         {
           "name": "entity.name.type.concept.sync",
-          "match": "\\b[A-Z][A-Za-z0-9_]*\\._[a-z][A-Za-z0-9_]*\\b"
-        }
-      ]
-    },
-    "variables": {
-      "patterns": [
+          "match": "\\b[A-Z]\\w*\\._\\w+\\b"
+        },
         {
           "name": "variable.parameter.sync",
-          "match": "\\b[a-z][A-Za-z0-9_]*\\b"
+          "match": "\\b[a-z]\\w*\\b"
         }
       ]
     }

@@ -9,16 +9,13 @@
       "include": "#keywords"
     },
     {
-      "include": "#strings"
-    },
-    {
       "include": "#comments"
     },
     {
-      "include": "#types"
+      "include": "#strings"
     },
     {
-      "include": "#identifiers"
+      "include": "#simple-types"
     }
   ],
   "repository": {
@@ -34,25 +31,41 @@
       },
       "patterns": [
         { "include": "#keywords" },
-        { "include": "#strings" },
         { "include": "#comments" },
-        { "include": "#types" },
-        { "include": "#identifiers" }
+        { "include": "#strings" },
+        { "include": "#simple-types" }
       ]
     },
     "keywords": {
       "patterns": [
         {
           "name": "keyword.control.concept",
-          "match": "\\b(concept|purpose|state|actions|queries|operational|principle)\\b"
+          "match": "^\\s*(concept|purpose|state|actions|queries|operational principle)\\b"
         },
         {
           "name": "keyword.type.concept",
           "match": "\\b(String|Number|Boolean|Date|DateTime|Flag|ObjectId|Object)\\b"
         },
         {
-          "name": "keyword.modifier.concept",
+          "name": "keyword.modifier.concept", 
           "match": "\\b(optional|set|seq|of|with|element|a|an)\\b"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.concept",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.line.number-sign.concept",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.block.concept",
+          "begin": "/\\*",
+          "end": "\\*/"
         }
       ]
     },
@@ -67,46 +80,19 @@
         }
       ]
     },
-    "comments": {
-      "patterns": [
-        {
-          "name": "comment.line.double-slash.concept",
-          "begin": "//",
-          "end": "$"
-        },
-        {
-          "name": "comment.line.number-sign.concept",
-          "begin": "#",
-          "end": "$"
-        },
-        {
-          "name": "comment.block.concept",
-          "begin": "/\\*",
-          "end": "\\*/"
-        }
-      ]
-    },
-    "types": {
+    "simple-types": {
       "patterns": [
         {
           "name": "entity.name.type.concept",
-          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+          "match": "\\b[A-Z]\\w*\\b"
         },
         {
-          "name": "storage.type.concept",
-          "match": "\\[([A-Za-z0-9_]+)\\]"
-        }
-      ]
-    },
-    "identifiers": {
-      "patterns": [
-        {
           "name": "variable.other.concept",
-          "match": "\\b[a-z][A-Za-z0-9_]*\\b"
+          "match": "\\b[a-z]\\w*\\b"
         },
         {
           "name": "support.function.concept",
-          "match": "\\b_[a-z][A-Za-z0-9_]*\\b"
+          "match": "\\b_\\w+\\b"
         }
       ]
     }

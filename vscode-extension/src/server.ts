@@ -19,12 +19,38 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { ConceptSpecParser } from './parsers/conceptParser';
 import { SyncSpecParser } from './parsers/syncParser';
 import { ConceptValidator } from './validation/validator';
+import { validateConceptDocument as enhancedValidateConceptDocument, validateSyncDocument as enhancedValidateSyncDocument } from './enhanced-validation';
+
+// Debug logging utilities
+let debugLoggingEnabled = false;
+function debugLog(message: string, ...args: any[]) {
+    if (debugLoggingEnabled) {
+        console.log(`[Concept Design Debug] ${new Date().toISOString()} - ${message}`, ...args);
+    }
+}
+
+function errorLog(message: string, error?: any) {
+    console.error(`[Concept Design ERROR] ${new Date().toISOString()} - ${message}`, error);
+}
+
+function warnLog(message: string) {
+    console.warn(`[Concept Design WARN] ${new Date().toISOString()} - ${message}`);
+}
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+
+// Track active validations to prevent infinite loops and crashes
+const activeValidations = new Set<string>();
+const validationTimeouts = new Map<string, NodeJS.Timeout>();
+const MAX_CONCURRENT_VALIDATIONS = 5;
+const VALIDATION_TIMEOUT = 3000; // 3 seconds
+
+// Configuration
+let validationEnabled = false;
 
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
@@ -36,6 +62,7 @@ const syncParser = new SyncSpecParser();
 const validator = new ConceptValidator();
 
 connection.onInitialize((params: InitializeParams) => {
+    debugLog('Language server initializing...');
     const capabilities = params.capabilities;
 
     hasConfigurationCapability = !!(
@@ -72,37 +99,104 @@ connection.onInitialize((params: InitializeParams) => {
         };
     }
 
+    debugLog('Language server initialized with capabilities:', JSON.stringify(result.capabilities, null, 2));
     return result;
 });
 
 connection.onInitialized(() => {
+    debugLog('Language server post-initialization...');
     if (hasConfigurationCapability) {
+        // Register for all configuration changes
         connection.client.register(DidChangeConfigurationNotification.type, undefined);
+        debugLog('Registered for configuration changes');
     }
     if (hasWorkspaceFolderCapability) {
         connection.workspace.onDidChangeWorkspaceFolders(_event => {
-            connection.console.log('Workspace folder change event received.');
+            debugLog('Workspace folder change event received.');
         });
     }
+    
+    // Get initial configuration
+    updateConfiguration();
+    debugLog('Language server fully initialized');
 });
+
+// Configuration change handler
+connection.onDidChangeConfiguration(change => {
+    debugLog('Configuration changed:', JSON.stringify(change, null, 2));
+    updateConfiguration();
+});
+
+async function updateConfiguration() {
+    try {
+        if (hasConfigurationCapability) {
+            const config = await connection.workspace.getConfiguration('conceptDesign');
+            debugLoggingEnabled = config?.debug?.enableLogging || false;
+            validationEnabled = config?.linting?.enableLanguageServer || false;
+            
+            debugLog('Configuration updated:', {
+                debugLogging: debugLoggingEnabled,
+                validationEnabled: validationEnabled
+            });
+        }
+    } catch (error) {
+        errorLog('Failed to get configuration:', error);
+    }
+}
 
 // Document change handler
 documents.onDidChangeContent(change => {
+    debugLog('Document changed:', change.document?.uri);
+    
+    // Only validate if validation is enabled
+    if (!validationEnabled) {
+        debugLog('Validation disabled, skipping document validation');
+        return;
+    }
+    
     // Add safety check to prevent crashes
     if (change.document && change.document.uri) {
+        // Prevent too many concurrent validations
+        if (activeValidations.size >= MAX_CONCURRENT_VALIDATIONS) {
+            warnLog(`Too many concurrent validations (${activeValidations.size}), skipping ${change.document.uri}`);
+            return;
+        }
+        
         validateTextDocument(change.document);
     }
 });
 
 // Handle diagnostic requests
 connection.languages.diagnostics.on(async (params) => {
-    const document = documents.get(params.textDocument.uri);
-    if (document !== undefined) {
+    debugLog('Diagnostic request for:', params.textDocument.uri);
+    
+    // Return empty diagnostics if validation is disabled
+    if (!validationEnabled) {
+        debugLog('Validation disabled, returning empty diagnostics');
         return {
             kind: DocumentDiagnosticReportKind.Full,
-            items: await getDiagnostics(document)
+            items: []
         } satisfies DocumentDiagnosticReport;
+    }
+    
+    const document = documents.get(params.textDocument.uri);
+    if (document !== undefined) {
+        try {
+            const diagnostics = await getDiagnostics(document);
+            debugLog(`Returning ${diagnostics.length} diagnostics for ${params.textDocument.uri}`);
+            return {
+                kind: DocumentDiagnosticReportKind.Full,
+                items: diagnostics
+            } satisfies DocumentDiagnosticReport;
+        } catch (error) {
+            errorLog('Error getting diagnostics:', error);
+            return {
+                kind: DocumentDiagnosticReportKind.Full,
+                items: []
+            } satisfies DocumentDiagnosticReport;
+        }
     } else {
+        debugLog('Document not found:', params.textDocument.uri);
         return {
             kind: DocumentDiagnosticReportKind.Full,
             items: []
@@ -111,28 +205,59 @@ connection.languages.diagnostics.on(async (params) => {
 });
 
 async function getDiagnostics(textDocument: TextDocument): Promise<Diagnostic[]> {
+    const uri = textDocument.uri;
     const diagnostics: Diagnostic[] = [];
     
+    // Check if already validating this document
+    if (activeValidations.has(uri)) {
+        debugLog('Validation already in progress for:', uri);
+        return [];
+    }
+    
+    // Add to active validations
+    activeValidations.add(uri);
+    debugLog('Starting validation for:', uri, 'Active validations:', activeValidations.size);
+    
+    // Set up timeout
+    const timeoutHandle = setTimeout(() => {
+        errorLog('Validation timeout for:', uri);
+        activeValidations.delete(uri);
+        validationTimeouts.delete(uri);
+    }, VALIDATION_TIMEOUT);
+    
+    validationTimeouts.set(uri, timeoutHandle);
+    
     try {
+        const startTime = Date.now();
+        
         // Add timeout protection to prevent infinite loops
         const timeoutPromise = new Promise<void>((_, reject) => {
-            setTimeout(() => reject(new Error('Validation timeout')), 5000); // 5 second timeout
+            setTimeout(() => {
+                reject(new Error(`Validation timeout after ${VALIDATION_TIMEOUT}ms`));
+            }, VALIDATION_TIMEOUT);
         });
         
         const validationPromise = (async () => {
+            debugLog('Running validation for language:', textDocument.languageId);
+            
             if (textDocument.languageId === 'concept') {
-                await validateConceptDocument(textDocument.getText(), diagnostics);
+                await enhancedValidateConceptDocument(textDocument.getText(), diagnostics);
             } else if (textDocument.languageId === 'sync') {
-                await validateSyncDocument(textDocument.getText(), diagnostics);
+                await enhancedValidateSyncDocument(textDocument.getText(), diagnostics);
             }
+            
+            debugLog('Validation completed for:', uri, 'Diagnostics:', diagnostics.length);
         })();
         
         // Race the validation against the timeout
         await Promise.race([validationPromise, timeoutPromise]);
         
+        const duration = Date.now() - startTime;
+        debugLog(`Validation completed in ${duration}ms for:`, uri);
+        
     } catch (error) {
-        // Log error but don't crash
-        connection.console.error(`Diagnostic error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        errorLog(`Diagnostic error for ${uri}:`, errorMessage);
         
         // Clear any partial diagnostics that might cause issues
         diagnostics.length = 0;
@@ -144,21 +269,39 @@ async function getDiagnostics(textDocument: TextDocument): Promise<Diagnostic[]>
                 start: { line: 0, character: 0 },
                 end: { line: 0, character: 1 }
             },
-            message: `Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            message: `Validation error: ${errorMessage}`,
             source: 'concept-design'
         });
+    } finally {
+        // Clean up
+        activeValidations.delete(uri);
+        const timeoutHandle = validationTimeouts.get(uri);
+        if (timeoutHandle) {
+            clearTimeout(timeoutHandle);
+            validationTimeouts.delete(uri);
+        }
+        debugLog('Cleanup completed for:', uri, 'Remaining active validations:', activeValidations.size);
     }
     
     return diagnostics;
 }
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+    debugLog('validateTextDocument called for:', textDocument.uri);
+    
+    if (!validationEnabled) {
+        debugLog('Validation disabled, clearing diagnostics for:', textDocument.uri);
+        connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
+        return;
+    }
+    
     try {
         const diagnostics = await getDiagnostics(textDocument);
+        debugLog(`Sending ${diagnostics.length} diagnostics for:`, textDocument.uri);
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
     } catch (error) {
-        // Log the error but don't crash VS Code
-        connection.console.error(`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        errorLog(`Validation error for ${textDocument.uri}:`, errorMessage);
         
         // Send empty diagnostics to clear any previous ones
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
@@ -166,14 +309,20 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 }
 
 async function validateConceptDocument(text: string, diagnostics: Diagnostic[]): Promise<void> {
+    debugLog('validateConceptDocument starting, text length:', text.length);
+    
     if (!text || text.length > 100000) {
+        debugLog('Skipping validation: empty or too large document');
         return; // Don't validate empty documents or extremely large ones
     }
     
     const lines = text.split('\n');
     if (lines.length > 10000) {
+        debugLog('Skipping validation: too many lines:', lines.length);
         return; // Don't validate files with too many lines
     }
+    
+    debugLog('Validating concept document with', lines.length, 'lines');
     
     // Basic validation rules for .concept files
     let hasConceptDeclaration = false;
@@ -183,7 +332,14 @@ async function validateConceptDocument(text: string, diagnostics: Diagnostic[]):
     let currentSection = '';
     let indentLevel = 0;
 
-    for (let i = 0; i < lines.length && i < 5000; i++) { // Add upper bound to prevent infinite loops
+    const maxLines = Math.min(lines.length, 1000); // Reduced limit for safety
+    debugLog('Processing', maxLines, 'lines (of', lines.length, 'total)');
+    
+    for (let i = 0; i < maxLines; i++) { // Add upper bound to prevent infinite loops
+        // Add periodic debug logging to catch infinite loops
+        if (i > 0 && i % 100 === 0) {
+            debugLog('Processing line', i, 'of', maxLines);
+        }
         const line = lines[i];
         const trimmedLine = line.trim();
         
@@ -420,21 +576,34 @@ async function validateConceptDocument(text: string, diagnostics: Diagnostic[]):
 }
 
 async function validateSyncDocument(text: string, diagnostics: Diagnostic[]): Promise<void> {
+    debugLog('validateSyncDocument starting, text length:', text.length);
+    
     if (!text || text.length > 100000) {
+        debugLog('Skipping sync validation: empty or too large document');
         return; // Don't validate empty documents or extremely large ones
     }
     
     const lines = text.split('\n');
     if (lines.length > 10000) {
+        debugLog('Skipping sync validation: too many lines:', lines.length);
         return; // Don't validate files with too many lines
     }
+    
+    debugLog('Validating sync document with', lines.length, 'lines');
     
     // Basic validation for .sync files
     let hasExport = false;
     let hasWhen = false;
     let hasThen = false;
 
-    for (let i = 0; i < lines.length && i < 5000; i++) { // Add upper bound to prevent infinite loops
+    const maxLines = Math.min(lines.length, 1000); // Reduced limit for safety
+    debugLog('Processing sync', maxLines, 'lines (of', lines.length, 'total)');
+    
+    for (let i = 0; i < maxLines; i++) { // Add upper bound to prevent infinite loops
+        // Add periodic debug logging to catch infinite loops
+        if (i > 0 && i % 100 === 0) {
+            debugLog('Processing sync line', i, 'of', maxLines);
+        }
         const line = lines[i];
         const trimmedLine = line.trim();
         

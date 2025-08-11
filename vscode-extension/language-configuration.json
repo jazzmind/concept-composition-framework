@@ -1,7 +1,6 @@
 {
     "comments": {
-        "lineComment": "//",
-        "blockComment": ["/*", "*/"]
+        "lineComment": "#"
     },
     "brackets": [
         ["{", "}"],
@@ -12,24 +11,19 @@
         ["{", "}"],
         ["[", "]"],
         ["(", ")"],
-        ["\"", "\""],
-        ["'", "'"]
+        ["\"", "\""]
     ],
     "surroundingPairs": [
         ["{", "}"],
         ["[", "]"],
         ["(", ")"],
-        ["\"", "\""],
-        ["'", "'"]
+        ["\"", "\""]
     ],
-    "indentationRules": {
-        "increaseIndentPattern": "^((?!.*?\\/\\*).*)*((\\{[^}\"'`]*$)|(\\([^)\"'`]*$)|(\\[[^\\]\"'`]*$))$",
-        "decreaseIndentPattern": "^((?!.*?\\/\\*).*)*[}\\])]\\s*$"
-    },
     "folding": {
         "markers": {
-            "start": "^\\s*(concept|state|actions|queries|sync|when|where|then)\\s*$",
+            "start": "^\\s*(concept|purpose|state|actions|queries|operational principle|sync|when|where|then)\\s*$",
             "end": "^\\s*$"
         }
     }
 }
+

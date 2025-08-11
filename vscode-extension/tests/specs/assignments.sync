@@ -1,0 +1,267 @@
+// comment
+<sync_spec>
+
+sync CreateAssignment
+    when
+        API.request (method: "POST", path: "/api/assignments", task: task, assignee: assignee, dueDate: dueDate?, priority: priority?, description: description?) : (request: request)
+    where
+        API._getCurrentUser (request: request) : (assigner: assigner)
+        Session._getCurrentContext (sessionKey: request.sessionId) : (context: context)
+        Membership._getByMemberAndTarget (memberEntity: assigner, targetEntity: context) : (membership: membership)
+        Role._getByName (name: membership.roleEntity) : (userRole: userRole)
+        userRole.permissions.assignments.create = true
+    then
+        Assignment.assign (assignment: assignmentId, task: task, assignee: assignee, assigner: assigner, dueDate: dueDate)
+
+    sync CreateAssignmentSuccess
+    when
+        API.request (method: "POST", path: "/api/assignments") : (request: request)
+        Assignment.assign (assignment: assignmentId) : (assignment: assignment)
+    then
+        API.respond (request: request, status: 201, body: {assignment: assignment})
+
+    sync CreateAssignmentUnauthorized
+    when
+        API.request (method: "POST", path: "/api/assignments") : (request: request)
+    where
+        API._getCurrentUser (request: request) : (assigner: assigner)
+        Session._getCurrentContext (sessionKey: request.sessionId) : (context: context)
+        Membership._getByMemberAndTarget (memberEntity: assigner, targetEntity: context) : (membership: membership)
+        Role._getByName (name: membership.roleEntity) : (userRole: userRole)
+        userRole.permissions.assignments.create = false
+    then
+        API.respond (request: request, status: 403, body: {error: "Insufficient permissions to create assignments"})
+
+sync CreateDirectAssignment
+    when
+        API.request (method: "POST", path: "/api/assignments/direct", assignmentType: assignmentType, sourceEntity: sourceEntity, targetEntity: targetEntity) : (request: request)
+    where
+        API._getCurrentUser (request: request) : (assignedBy: assignedBy)
+        Session._getCurrentContext (sessionKey: request.sessionId) : (context: context)
+        Membership._getByMemberAndTarget (memberEntity: assignedBy, targetEntity: context) : (membership: membership)
+        Role._getByName (name: membership.roleEntity) : (userRole: userRole)
+        userRole.permissions.assignments.create = true
+    then
+        Assignment.createDirectAssignment (assignment: assignmentId, assignmentType: assignmentType, sourceEntity: sourceEntity, targetEntity: targetEntity, assignedBy: assignedBy)
+
+sync AcceptAssignment
+    when
+        API.request (method: "POST", path: "/api/assignments/:assignmentId/accept") : (request: request)
+    where
+        API._getCurrentUser (request: request) : (userId: userId)
+        Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+        assignment.assignee = userId
+    then
+        Assignment.accept (assignment: assignmentId)
+
+sync AcceptAssignmentSuccess
+    when
+        API.request (method: "POST", path: "/api/assignments/:assignmentId/accept") : (request: request)
+        Assignment.accept (assignment: assignmentId) : (assignment: assignment)
+    then
+        API.respond (request: request, status: 200, body: {assignment: assignment})
+
+    sync AcceptAssignmentUnauthorized
+    when
+        API.request (method: "POST", path: "/api/assignments/:assignmentId/accept") : (request: request)
+    where
+        API._getCurrentUser (request: request) : (userId: userId)
+        Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+        assignment.assignee != userId
+    then
+        API.respond (request: request, status: 403, body: {error: "Only the assignee can accept this assignment"})
+
+sync StartAssignment
+    when
+        API.request (method: "POST", path: "/api/assignments/:assignmentId/start") : (request: request)
+    where
+        API._getCurrentUser (request: request) : (userId: userId)
+        Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+        assignment.assignee = userId
+        assignment.status = "accepted"
+    then
+        Assignment.start (assignment: assignmentId)
+
+sync CompleteAssignment
+    when
+        API.request (method: "POST", path: "/api/assignments/:assignmentId/complete") : (request: request)
+    where
+        API._getCurrentUser (request: request) : (userId: userId)
+        Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+        assignment.assignee = userId
+        assignment.status = "in_progress"
+    then
+        Assignment.complete (assignment: assignmentId)
+
+sync CompleteAssignmentSuccess
+    when
+        API.request (method: "POST", path: "/api/assignments/:assignmentId/complete") : (request: request)
+        Assignment.complete (assignment: assignmentId) : (assignment: assignment)
+    then
+        API.respond (request: request, status: 200, body: {assignment: assignment, message: "Assignment completed successfully"})
+
+sync RejectAssignment
+    when
+        API.request (method: "POST", path: "/api/assignments/:assignmentId/reject") : (request: request)
+    where
+        API._getCurrentUser (request: request) : (userId: userId)
+        Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+        assignment.assignee = userId
+        assignment.status = "assigned"
+    then
+        Assignment.reject (assignment: assignmentId)
+
+sync CancelAssignment
+when
+    API.request (method: "POST", path: "/api/assignments/:assignmentId/cancel") : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assigner = userId
+then
+    Assignment.cancel (assignment: assignmentId)
+
+sync UpdateAssignmentPriority
+when
+    API.request (method: "PUT", path: "/api/assignments/:assignmentId/priority", priority: priority) : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assigner = userId or assignment.assignee = userId
+then
+    Assignment.updatePriority (assignment: assignmentId, priority: priority)
+
+sync UpdateAssignmentDueDate
+when
+    API.request (method: "PUT", path: "/api/assignments/:assignmentId/due-date", dueDate: dueDate) : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assigner = userId
+then
+    Assignment.updateDueDate (assignment: assignmentId, dueDate: dueDate)
+
+sync AddProgressNote
+when
+    API.request (method: "POST", path: "/api/assignments/:assignmentId/notes", note: note, noteType: noteType) : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assignee = userId or assignment.assigner = userId
+then
+    Assignment.addProgressNote (assignment: assignmentId, note: note, author: userId, noteType: noteType)
+
+sync AddProgressNoteSuccess
+when
+    API.request (method: "POST", path: "/api/assignments/:assignmentId/notes") : (request: request)
+    Assignment.addProgressNote (assignment: assignmentId, note: note, author: userId, noteType: noteType) : (progressNote: progressNote)
+then
+    API.respond (request: request, status: 201, body: {progressNote: progressNote})
+
+sync AddAssignmentFeedback
+when
+    API.request (method: "POST", path: "/api/assignments/:assignmentId/feedback", rating: rating?, comment: comment) : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assigner = userId
+    assignment.status = "completed"
+then
+    Assignment.addFeedback (assignment: assignmentId, author: userId, rating: rating, comment: comment)
+
+sync AddFeedbackSuccess
+when
+    API.request (method: "POST", path: "/api/assignments/:assignmentId/feedback") : (request: request)
+    Assignment.addFeedback (assignment: assignmentId) : (feedback: feedback)
+then
+    API.respond (request: request, status: 201, body: {feedback: feedback})
+
+sync GetAssignment
+when
+    API.request (method: "GET", path: "/api/assignments/:assignmentId") : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assignee = userId or assignment.assigner = userId
+then
+    API.respond (request: request, status: 200, body: {assignment: assignment})
+
+sync GetMyAssignments
+when
+    API.request (method: "GET", path: "/api/assignments/my") : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignee (assignee: userId) : (assignments: assignments)
+then
+    API.respond (request: request, status: 200, body: {assignments: assignments})
+
+sync GetAssignmentsByStatus
+when
+    API.request (method: "GET", path: "/api/assignments/status/:status") : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Session._getCurrentContext (sessionKey: request.sessionId) : (context: context)
+    Membership._getByMemberAndTarget (memberEntity: userId, targetEntity: context) : (membership: membership)
+    Role._getByName (name: membership.roleEntity) : (userRole: userRole)
+    userRole.permissions.assignments.read = true
+    Assignment._getByStatus (status: status) : (assignments: assignments)
+then
+    API.respond (request: request, status: 200, body: {assignments: assignments})
+
+sync GetOverdueAssignments
+when
+    API.request (method: "GET", path: "/api/assignments/overdue") : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Session._getCurrentContext (sessionKey: request.sessionId) : (context: context)
+    Membership._getByMemberAndTarget (memberEntity: userId, targetEntity: context) : (membership: membership)
+    Role._getByName (name: membership.roleEntity) : (userRole: userRole)
+    userRole.permissions.assignments.read = true
+    Assignment._getOverdue () : (assignments: assignments)
+then
+    API.respond (request: request, status: 200, body: {assignments: assignments})
+
+sync GetAssignmentProgress
+when
+    API.request (method: "GET", path: "/api/assignments/:assignmentId/progress") : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assignee = userId or assignment.assigner = userId
+    Assignment._getProgressNotes (assignment: assignmentId) : (progressNotes: progressNotes)
+then
+    API.respond (request: request, status: 200, body: {progressNotes: progressNotes})
+
+sync GetAssignmentFeedback
+when
+    API.request (method: "GET", path: "/api/assignments/:assignmentId/feedback") : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assignee = userId or assignment.assigner = userId
+    Assignment._getFeedback (assignment: assignmentId) : (feedback: feedback)
+then
+    API.respond (request: request, status: 200, body: {feedback: feedback})
+
+sync DeleteAssignment
+when
+    API.request (method: "DELETE", path: "/api/assignments/:assignmentId") : (request: request)
+where
+    API._getCurrentUser (request: request) : (userId: userId)
+    Assignment._getByAssignment (assignment: assignmentId) : (assignment: assignment)
+    assignment.assigner = userId
+    assignment.status = "assigned" or assignment.status = "rejected"
+then
+    Assignment.delete (assignment: assignmentId)
+
+</sync_spec>
+
+
+
+
+
+
+
+
+
+

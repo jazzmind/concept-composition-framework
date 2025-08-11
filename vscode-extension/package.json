@@ -2,7 +2,7 @@
   "name": "concept-design-tools",
   "displayName": "Concept Design Tools",
   "description": "Development tools for Concept Design applications - linting, validation, schema generation, and code generation",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "publisher": "concept-design",
   "engines": {
     "vscode": "^1.85.0"
@@ -26,34 +26,24 @@
     "prisma"
   ],
   "activationEvents": [
-    "onLanguage:concept",
-    "onLanguage:sync",
     "workspaceContains:**/*.concept",
-    "workspaceContains:**/*.sync"
+    "workspaceContains:**/*.sync",
+    "onLanguage:concept",
+    "onLanguage:sync"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
       {
         "id": "concept",
-        "aliases": [
-          "Concept",
-          "concept"
-        ],
-        "extensions": [
-          ".concept"
-        ],
+        "aliases": ["Concept Specification", "concept"],
+        "extensions": [".concept"],
         "configuration": "./language-configuration.json"
       },
       {
         "id": "sync",
-        "aliases": [
-          "Sync",
-          "sync"
-        ],
-        "extensions": [
-          ".sync"
-        ],
+        "aliases": ["Sync Specification", "sync"],
+        "extensions": [".sync"],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -65,7 +55,7 @@
       },
       {
         "language": "sync",
-        "scopeName": "source.sync",
+        "scopeName": "source.sync", 
         "path": "./syntaxes/sync.tmLanguage.json"
       }
     ],
@@ -98,6 +88,21 @@
       {
         "command": "concept-design.generateCursorRules",
         "title": "Generate Cursor Rules (AI)",
+        "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.testExtension",
+        "title": "Test Extension (No Linting)",
+        "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.toggleSyntaxHighlighting",
+        "title": "Toggle Syntax Highlighting",
+        "category": "Concept Design"
+      },
+      {
+        "command": "concept-design.toggleSyntaxSafeMode",
+        "title": "Toggle Safe Syntax Highlighting",
         "category": "Concept Design"
       }
     ],
@@ -149,22 +154,47 @@
       "type": "object",
       "title": "Concept Design Tools",
       "properties": {
-        "conceptDesign.openaiApiKey": {
-          "type": "string",
-          "default": "",
-          "description": "OpenAI API key for AI-powered features (can also use OPENAI_API_KEY environment variable)"
+        "conceptDesign.extension.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Master toggle for the entire extension - when disabled, no features will activate"
+        },
+        "conceptDesign.languages.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable language definitions for .concept and .sync files"
+        },
+        "conceptDesign.commands.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable command registration (validation, code generation, etc.)"
+        },
+        "conceptDesign.menus.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable context menus in explorer and editor"
+        },
+        "conceptDesign.activation.autoTrigger": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically activate extension when .concept files are detected"
         },
         "conceptDesign.openai.apiKey": {
           "type": "string",
           "default": "",
-          "description": "OpenAI API key for cursor rules generation and AI analysis",
+          "description": "OpenAI API key for AI-powered features (validation, cursor rules generation)",
           "scope": "application"
         },
         "conceptDesign.openai.model": {
           "type": "string",
-          "default": "gpt-4-turbo-preview",
-          "enum": ["gpt-4-turbo-preview", "gpt-4", "gpt-3.5-turbo"],
-          "description": "OpenAI model to use for generating cursor rules"
+          "default": "gpt-4.1",
+          "enum": [
+            "gpt-4.1",
+            "gpt-4.1-mini",
+            "gpt-5-mini",
+            "gpt-5"
+          ],
+          "description": "OpenAI model to use for AI-powered features"
         },
         "conceptDesign.directories.specs": {
           "type": "string",
@@ -186,15 +216,25 @@
           "default": "prisma/schema.prisma",
           "description": "Path to generated Prisma schema file"
         },
+        "conceptDesign.validation.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable validation features"
+        },
         "conceptDesign.validation.strictMode": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Enable strict validation mode for more rigorous checking"
         },
         "conceptDesign.validation.includeAIAnalysis": {
           "type": "boolean",
           "default": false,
           "description": "Include AI-powered analysis in validation (requires OpenAI API key)"
+        },
+        "conceptDesign.codeGeneration.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code generation features"
         },
         "conceptDesign.codeGeneration.overwriteExisting": {
           "type": "boolean",
@@ -206,10 +246,45 @@
           "default": false,
           "description": "Generate code for MongoDB instead of PostgreSQL/Prisma"
         },
+        "conceptDesign.linting.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable linting and diagnostics features"
+        },
         "conceptDesign.linting.enableRealTime": {
           "type": "boolean",
           "default": true,
           "description": "Enable real-time linting and validation for .concept and .sync files"
+        },
+        "conceptDesign.linting.enableLanguageServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the language server for diagnostics"
+        },
+        "conceptDesign.debug.enableLogging": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable detailed debug logging for troubleshooting"
+        },
+        "conceptDesign.syntax.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable syntax highlighting features"
+        },
+        "conceptDesign.syntax.enableHighlighting": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable syntax highlighting for .concept and .sync files (EXPERIMENTAL - may cause crashes)"
+        },
+        "conceptDesign.syntax.useSafeMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use safe syntax highlighting mode with simplified regex patterns to prevent crashes (only applies when syntax highlighting is enabled)"
+        },
+        "conceptDesign.problemMatchers.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable problem matchers for build tasks"
         }
       }
     },
@@ -253,7 +328,6 @@
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.39.0",
     "@vscode/test-electron": "^2.4.0",
-    "@vscode/vsce": "^2.29.0",
     "eslint": "^9.0.0",
     "fast-glob": "^3.3.2",
     "mocha": "^10.7.0",
@@ -261,9 +335,9 @@
     "typescript": "^5.4.0"
   },
   "dependencies": {
-    "openai": "^4.104.0",
-    "vscode-languageclient": "^8.1.0",
-    "vscode-languageserver": "^8.1.0",
+    "openai": "^5.12.2",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.8"
   }
 }

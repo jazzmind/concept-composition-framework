@@ -1,0 +1,111 @@
+// comment
+<concept_spec>
+
+concept Expert
+
+purpose 
+  manage expert profiles and their areas of expertise for project guidance
+
+state
+  a set of Experts with
+    an expert String
+    a name String
+    an email String
+    a bio String
+    an expertiseDomains set of String
+    an optional specializations set of String
+    an  optional title String
+    an optional company String
+    an optional linkedinUrl String
+    an optional website String
+    an availability String
+    an optional hourlyRate Number
+    a timezone String
+    an optional languages set of String
+    a rating Number
+    a totalProjects Number
+    an isActive Flag
+    an isVerified Flag
+    a createdAt Date
+    an updatedAt Date
+
+actions
+  create(expert: String, name: String, email: String, bio: String, expertiseDomains: [String], timezone: String) -> Expert | {error}
+    - create new expert
+    - validate email format and uniqueness
+    - initialize rating to 0, totalProjects to 0
+    - set isActive=true, isVerified=false, availability="available"
+    - return expert with generated id and timestamps
+
+  update(expert: String, bio: String?, expertiseDomains: [String]?, specializations: [String]?, title: String?, company: String?, linkedinUrl: String?, website: String?, hourlyRate: Number?, languages: [String]?, timezone: String?) -> Expert | {error}
+    - update existing expert fields
+    - return updated expert
+
+  updateAvailability(expert: String, availability: String) -> Expert | {error}
+    - update expert availability status
+    - validate availability is "available", "limited", or "unavailable"
+    - return updated expert
+
+  verify(expert: String) -> Expert | {error}
+    - mark expert as verified
+    - set isVerified=true
+    - return updated expert
+
+  recordProjectCompletion(expert: String, rating: Number) -> Expert | {error}
+    - increment totalProjects count
+    - update overall rating (weighted average)
+    - validate rating is between 1-5
+    - return updated expert
+
+  activate(expert: String) -> Expert | {error}
+    - activate expert profile
+    - set isActive=true
+    - return updated expert
+
+  deactivate(expert: String) -> Expert | {error}
+    - deactivate expert profile
+    - set isActive=false
+    - return updated expert
+
+  delete(expert: String) -> {success: Boolean} | {error}
+    - delete expert
+    - return success status
+
+queries
+  _getByExpert(expert: String) -> [Expert]
+    - return expert by identifier
+
+  _getByEmail(email: String) -> [Expert]
+    - return expert by email
+
+  _getByExpertiseDomain(domain: String) -> [Expert]
+    - return experts with matching expertise domain
+
+  _getBySpecialization(specialization: String) -> [Expert]
+    - return experts with specific specialization
+
+  _getByAvailability(availability: String) -> [Expert]
+    - return experts with specific availability status
+
+  _getAvailable() -> [Expert]
+    - return experts with "available" status
+
+  _getVerified() -> [Expert]
+    - return verified experts
+
+  _getTopRated(limit: Number) -> [Expert]
+    - return highest rated experts, limited by count
+
+  _searchByKeywords(keywords: [String]) -> [Expert]
+    - return experts whose bio or expertise domains match keywords
+
+  _getByCompany(company: String) -> [Expert]
+    - return experts from specific company
+
+  _getActive() -> [Expert]
+    - return active experts
+
+operational principle
+  Experts "provide specialized knowledge and guidance". They maintain profiles with their expertise areas, availability, and performance metrics. After create(expert: "e1", name: "Dr. Smith", email: "smith@example.com", bio: "AI researcher", expertiseDomains: ["machine learning"], timezone: "UTC") and verify(expert: "e1"), then _getVerified() includes the expert profile.
+
+</concept_spec>

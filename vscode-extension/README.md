@@ -92,7 +92,8 @@ A VS Code extension that provides comprehensive development tools for Concept De
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `conceptDesign.openaiApiKey` | `""` | OpenAI API key for AI analysis |
+| `conceptDesign.openai.apiKey` | `""` | OpenAI API key for AI analysis and cursor rules generation |
+| `conceptDesign.openai.model` | `"gpt-4.1"` | OpenAI model to use (gpt-4.1, gpt-4.1-mini, gpt-5-mini, gpt-5) |
 | `conceptDesign.validation.includeAIAnalysis` | `false` | Enable AI-powered validation |
 
 ### Code Generation
@@ -101,6 +102,29 @@ A VS Code extension that provides comprehensive development tools for Concept De
 |---------|---------|-------------|
 | `conceptDesign.codeGeneration.overwriteExisting` | `false` | Allow overwriting existing files |
 | `conceptDesign.codeGeneration.useMongoDb` | `false` | Generate MongoDB code instead of Prisma |
+
+### Syntax Highlighting (EXPERIMENTAL)
+
+⚠️ **Warning**: Syntax highlighting may cause VS Code crashes with certain file patterns.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `conceptDesign.syntax.enableHighlighting` | `false` | Enable syntax highlighting for .concept and .sync files (EXPERIMENTAL) |
+| `conceptDesign.syntax.useSafeMode` | `true` | Use simplified patterns to prevent crashes (when highlighting enabled) |
+
+**Safety Recommendations**: 
+- Keep syntax highlighting disabled by default (safer experience)
+- Use "Toggle Syntax Highlighting" command to enable temporarily if needed
+- If VS Code crashes while editing files, disable syntax highlighting immediately
+- Enable debug logging to troubleshoot issues
+
+### Linting & Language Server
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `conceptDesign.linting.enableLanguageServer` | `false` | Enable real-time linting (disabled by default for safety) |
+| `conceptDesign.linting.enableRealTime` | `false` | Enable automatic validation on file changes |
+| `conceptDesign.debug.enableLogging` | `false` | Enable detailed debug logging for troubleshooting |
 
 ## Commands
 
@@ -111,6 +135,11 @@ A VS Code extension that provides comprehensive development tools for Concept De
 | `Concept Design: Validate Concepts (with AI)` | AI-powered validation analysis |
 | `Concept Design: Generate Code` | Generate TypeScript implementations |
 | `Concept Design: Open Validation Report` | Open the last validation report |
+| `Concept Design: Generate Cursor Rules` | Generate AI-powered Cursor IDE rules for your project |
+| `Concept Design: Toggle Syntax Highlighting` | Enable/disable syntax highlighting (requires reload) |
+| `Concept Design: Toggle Safe Syntax Highlighting` | Switch between safe and full syntax highlighting modes |
+| `Concept Design: Toggle Linting` | Enable/disable real-time linting via language server |
+| `Concept Design: Test Extension (No Linting)` | Test extension functionality without linting |
 
 ## File Types
 

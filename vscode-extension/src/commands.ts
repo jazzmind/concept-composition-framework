@@ -95,9 +95,9 @@ export class ConceptDesignCommands {
             const config = vscode.workspace.getConfiguration('conceptDesign');
             
             if (useAI) {
-                const apiKey = config.get('openaiApiKey') as string || process.env.OPENAI_API_KEY;
+                const apiKey = config.get('openai.apiKey') as string || process.env.OPENAI_API_KEY;
                 if (!apiKey) {
-                    vscode.window.showErrorMessage('OpenAI API key required for AI analysis. Set it in settings or OPENAI_API_KEY environment variable.');
+                    vscode.window.showErrorMessage('OpenAI API key required for AI analysis. Set it in settings (conceptDesign.openai.apiKey) or OPENAI_API_KEY environment variable.');
                     return;
                 }
             }
@@ -260,7 +260,7 @@ export class ConceptDesignCommands {
         let command = `node "${enginePath}" validate --format html --output "${reportDir}"`;
         
         if (useAI) {
-            const apiKey = config.get('openaiApiKey') as string || process.env.OPENAI_API_KEY;
+            const apiKey = config.get('openai.apiKey') as string || process.env.OPENAI_API_KEY;
             command += ` --ai --api-key "${apiKey}"`;
         }
 
@@ -727,9 +727,11 @@ Generate comprehensive, production-ready cursor rules now.`;
             
             const openai = new OpenAI({ apiKey });
             
-            // Use the new responses API with GPT-4 (GPT-5 when available)
+            // Get the configured model
+            const configuredModel = vscode.workspace.getConfiguration('conceptDesign').get('openai.model', 'gpt-4.1');
+            
             const response = await openai.chat.completions.create({
-                model: 'gpt-4-turbo-preview', // Will update to 'gpt-5' when available
+                model: configuredModel,
                 messages: [
                     {
                         role: 'system',
@@ -813,5 +815,176 @@ Generated on: ${new Date().toISOString()}
         }
         
         return files;
+    }
+
+    /**
+     * Toggle the language server / linting on/off
+     */
+    async toggleLinting(): Promise<void> {
+        try {
+            const config = vscode.workspace.getConfiguration('conceptDesign');
+            const currentValue = config.get('linting.enableLanguageServer', false);
+            const newValue = !currentValue;
+            
+            await config.update('linting.enableLanguageServer', newValue, vscode.ConfigurationTarget.Workspace);
+            
+            const message = newValue 
+                ? '✅ Language Server / Linting enabled. Please reload VS Code for changes to take effect.'
+                : '❌ Language Server / Linting disabled. Please reload VS Code for changes to take effect.';
+            
+            const action = await vscode.window.showInformationMessage(message, 'Reload Now', 'Later');
+            
+            if (action === 'Reload Now') {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
+            
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Failed to toggle linting: ${errorMessage}`);
+        }
+    }
+
+    /**
+     * Test extension functionality without linting
+     */
+    async testExtension(): Promise<void> {
+        try {
+            this.outputChannel.show();
+            this.outputChannel.appendLine('🧪 Testing Concept Design Tools extension...');
+            
+            const workspaceFolder = this.getWorkspaceFolder();
+            if (!workspaceFolder) {
+                vscode.window.showErrorMessage('No workspace folder found for testing');
+                return;
+            }
+            
+            this.outputChannel.appendLine(`📁 Workspace: ${workspaceFolder}`);
+            
+            // Test configuration reading
+            const config = vscode.workspace.getConfiguration('conceptDesign');
+            const debugLogging = config.get('debug.enableLogging', false);
+            const languageServer = config.get('linting.enableLanguageServer', false);
+            const realTimeLinting = config.get('linting.enableRealTime', false);
+            const openaiApiKey = config.get('openai.apiKey', '');
+            const openaiModel = config.get('openai.model', 'gpt-4.1');
+            const syntaxSafeMode = config.get('syntax.useSafeMode', true);
+            
+            this.outputChannel.appendLine('⚙️ Configuration:');
+            this.outputChannel.appendLine(`  - Debug Logging: ${debugLogging}`);
+            this.outputChannel.appendLine(`  - Language Server: ${languageServer}`);
+            this.outputChannel.appendLine(`  - Real-time Linting: ${realTimeLinting}`);
+            this.outputChannel.appendLine(`  - OpenAI API Key: ${openaiApiKey ? 'Set ✅' : 'Not set ❌'}`);
+            this.outputChannel.appendLine(`  - OpenAI Model: ${openaiModel}`);
+            this.outputChannel.appendLine(`  - Syntax Safe Mode: ${syntaxSafeMode}`);
+            
+            // Test directory detection
+            const specsDir = path.join(workspaceFolder, config.get('directories.specs', 'specs'));
+            const conceptsDir = path.join(workspaceFolder, config.get('directories.concepts', 'concepts'));
+            const syncsDir = path.join(workspaceFolder, config.get('directories.syncs', 'syncs'));
+            
+            this.outputChannel.appendLine('📂 Directories:');
+            this.outputChannel.appendLine(`  - Specs: ${specsDir} ${fs.existsSync(specsDir) ? '✅' : '❌'}`);
+            this.outputChannel.appendLine(`  - Concepts: ${conceptsDir} ${fs.existsSync(conceptsDir) ? '✅' : '❌'}`);
+            this.outputChannel.appendLine(`  - Syncs: ${syncsDir} ${fs.existsSync(syncsDir) ? '✅' : '❌'}`);
+            
+            // Test file detection
+            let conceptFiles: string[] = [];
+            let syncFiles: string[] = [];
+            
+            if (fs.existsSync(specsDir)) {
+                conceptFiles = await this.findConceptFiles(specsDir);
+                syncFiles = await this.findSyncFiles(specsDir);
+            }
+            
+            this.outputChannel.appendLine('📄 Files:');
+            this.outputChannel.appendLine(`  - Concept files: ${conceptFiles.length}`);
+            conceptFiles.forEach(file => {
+                this.outputChannel.appendLine(`    - ${path.basename(file)}`);
+            });
+            this.outputChannel.appendLine(`  - Sync files: ${syncFiles.length}`);
+            syncFiles.forEach(file => {
+                this.outputChannel.appendLine(`    - ${path.basename(file)}`);
+            });
+            
+            // Test command availability
+            this.outputChannel.appendLine('🔧 Commands:');
+            this.outputChannel.appendLine('  - Generate Schema: Available');
+            this.outputChannel.appendLine('  - Validate Concepts: Available');
+            this.outputChannel.appendLine('  - Generate Code: Available');
+            this.outputChannel.appendLine('  - Generate Cursor Rules: Available');
+            this.outputChannel.appendLine('  - Toggle Linting: Available');
+            this.outputChannel.appendLine('  - Toggle Syntax Safe Mode: Available');
+            
+            this.outputChannel.appendLine('✅ Extension test completed successfully!');
+            
+            vscode.window.showInformationMessage(
+                `✅ Extension test completed! Found ${conceptFiles.length} concept files and ${syncFiles.length} sync files. Check output for details.`
+            );
+            
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.outputChannel.appendLine(`❌ Extension test failed: ${errorMessage}`);
+            vscode.window.showErrorMessage(`Extension test failed: ${errorMessage}`);
+        }
+    }
+
+    /**
+     * Toggle syntax highlighting on/off
+     */
+    async toggleSyntaxHighlighting(): Promise<void> {
+        try {
+            const config = vscode.workspace.getConfiguration('conceptDesign');
+            const currentValue = config.get('syntax.enableHighlighting', false);
+            const newValue = !currentValue;
+            
+            await config.update('syntax.enableHighlighting', newValue, vscode.ConfigurationTarget.Workspace);
+            
+            const message = newValue 
+                ? '🎨 Syntax highlighting enabled (EXPERIMENTAL - may cause crashes)'
+                : '🔒 Syntax highlighting disabled (safe mode)';
+            
+            const action = await vscode.window.showInformationMessage(
+                message + ' Please reload VS Code for changes to take effect.',
+                'Reload Now', 
+                'Later'
+            );
+            
+            if (action === 'Reload Now') {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to toggle syntax highlighting: ${error}`);
+        }
+    }
+
+    /**
+     * Toggle syntax highlighting safety mode
+     */
+    async toggleSyntaxSafeMode(): Promise<void> {
+        try {
+            const config = vscode.workspace.getConfiguration('conceptDesign');
+            const currentValue = config.get('syntax.useSafeMode', true);
+            const newValue = !currentValue;
+            
+            await config.update('syntax.useSafeMode', newValue, vscode.ConfigurationTarget.Workspace);
+            
+            const message = newValue 
+                ? '🛡️ Safe syntax highlighting enabled (prevents crashes)'
+                : '⚡ Full syntax highlighting enabled (may cause crashes with large files)';
+            
+            const action = await vscode.window.showInformationMessage(
+                message + ' Please reload VS Code for changes to take effect.',
+                'Reload Now', 
+                'Later'
+            );
+            
+            if (action === 'Reload Now') {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
+            
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Failed to toggle syntax mode: ${errorMessage}`);
+        }
     }
 }

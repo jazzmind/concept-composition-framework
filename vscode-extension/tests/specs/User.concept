@@ -1,0 +1,82 @@
+// comment
+<concept_spec>
+
+concept User
+
+purpose
+  associate identifying information with individuals
+
+state
+  a set of Users with
+    a user String
+    an email String
+    a name String
+    an optional avatar String
+    an isEmailVerified Flag
+    an optional lastLoginAt Date
+    an isActive Flag
+    an isSuspended Flag
+    an optional suspendedAt Date
+    an optional suspendedReason String
+    an optional preferences Object
+    a createdAt Date
+    an updatedAt Date
+
+actions
+  register(user: String, email: String, name: String) -> User | {error}
+    - create a new user account
+    - validate email format and uniqueness
+    - validate user identifier uniqueness
+    - set default values: isEmailVerified=false, isActive=true
+    - return user with generated id and timestamps
+
+  verifyEmail(user: String) -> User | {error}
+    - mark user's email as verified
+    - return updated user
+
+  updateProfile(user: String, name: String?, avatar: String?) -> User | {error}
+    - update user's profile information
+    - return updated user
+
+  updateLastLogin(user: String) -> User | {error}
+    - update user's last login timestamp
+    - return updated user
+
+  suspendUser(user: String, reason: String) -> User | {error}
+    - suspend user account
+    - set isSuspended=true, suspendedAt=now, suspendedReason
+    - return updated user
+
+  unsuspendUser(user: String) -> User | {error}
+    - unsuspend user account
+    - set isSuspended=false, clear suspendedAt and suspendedReason
+    - return updated user
+
+  updatePreferences(user: String, preferences: Object) -> User | {error}
+    - update user preferences
+    - return updated user
+
+  delete(user: String) -> {success: Boolean} | {error}
+    - soft delete user account (set isActive=false)
+    - return success status
+
+queries
+  _getById(user: String) -> [User]
+    - return user by user identifier
+
+  _getByEmail(email: String) -> [User]
+    - return user by email address
+
+  _getActiveUsers() -> [User]
+    - return all active users (isActive=true, isSuspended=false)
+
+  _getUnverifiedUsers() -> [User]
+    - return users with unverified email addresses
+
+  _getSuspendedUsers() -> [User]
+    - return suspended users
+
+operational principle
+  Users authenticate via email and maintain basic profile information. After register(user: "u1", email: "test@example.com", name: "John") and verifyEmail(user: "u1"), then _getById(user: "u1") shows isEmailVerified as true.
+
+</concept_spec>

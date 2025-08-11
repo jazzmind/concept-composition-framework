@@ -1,5 +1,5 @@
-import type { Vars, SyncFunctionMap } from '../../gpt5/engine/mod';
-import { actions, Frames } from '../../gpt5/engine/mod';
+import type { Vars, SyncFunctionMap } from '../engine/mod';
+import { actions, Frames } from '../engine/mod';
 import { APIConcept } from '../concepts/api';
 import { QuizConcept } from '../concepts/quiz';
 import { UserConcept } from '../concepts/user';

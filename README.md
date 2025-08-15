@@ -2,6 +2,8 @@
 
 A collection of utilities for building modular, maintainable applications using **Concept Design** methodology - where applications are built from independent concepts connected by synchronizations.
 
+This was built as part of a Sundai.club hackathon project sponsored by Professor Daniel Jackson and his team at CSAIL. The framework builds on the concepts explored in [Essence of Software](https://essenceofsoftware.com/). It is still a work in progress and is not yet ready for production use.
+
 ## 🎯 What is Concept Design?
 
 Concept Design is a modular software architecture approach that emphasizes:
@@ -19,12 +21,13 @@ For more information on the Concept Design methodology, see the [Concept Design 
 This repository contains several utilities for exploring and developing Concept Design applications:
 
 ### 1. 🧩 [VS Code Extension](./vscode-extension/) 
-**Production-ready IDE tooling for Concept Design development**
+**IDE tooling for Concept Design development**
+> **WORK IN PROGRESS**
 
 - **AI Rules Generation**: Generate customized rules for Cursor, Claude, Windsurf, GitHub Copilot, and other AI tools
 - **Schema Generation**: Auto-generate Prisma schemas from concept specifications
 - **Code Generation**: Generate TypeScript implementations from `.concept` files
-- **Comprehensive Validation**: AI-powered validation of specs and implementations
+- **Validation**: AI-powered validation of specs and implementations
 - **Language Support**: Syntax highlighting and IntelliSense for `.concept` and `.sync` files
 - **Real-time Linting**: Live validation and error detection
 
@@ -37,6 +40,7 @@ This repository contains several utilities for exploring and developing Concept 
 
 ### 2. ⚙️ [Engine Library](./engine-library/)
 **Core runtime engine for Concept Design applications**
+> **WORK IN PROGRESS**
 
 Available for import as `@sonnenreich/concept-design-engine` - for use as a foundational library to build Concept Design applications in typescript.
 
@@ -67,6 +71,7 @@ Available for import as `@sonnenreich/concept-design-engine` - for use as a foun
 
 ### 4. 🤖 [AI Rules Generator](./rules/) 
 **Standalone generator for AI development rules**
+> **WORK IN PROGRESS**
 
 Multi-tool rule generation system that creates customized development guidelines:
 
@@ -84,7 +89,8 @@ npx tsx generate.ts cursor nextjs-15 framework
 
 ### 5. 🔍 [Validation Engine](./validation/)
 **Standalone validation system for concept specifications**
-
+> **WORK IN PROGRESS**
+ 
 AI-powered validation that ensures concept specifications align with TypeScript implementations:
 
 - **Spec Validation**: Verify `.concept` files are well-formed and complete
@@ -102,7 +108,7 @@ npx tsx cli.ts validate --ai --format html
 
 ### 6. 🧪 [Testing & Evaluation](./tests/)
 **Evaluation framework for testing AI-generated code**
-> WORK IN PROGRESS
+> **WORK IN PROGRESS**
 
 Eventually this will contain several real-world application examples that test the Concept Design workflow:
 

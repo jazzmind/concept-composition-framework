@@ -1,6 +1,6 @@
-# Concept Design Framework
+# Concept Design Framework Utilities
 
-A comprehensive development framework for building modular, maintainable applications using **Concept Design** methodology - where applications are built from independent concepts connected by synchronizations.
+A collection of utilities for building modular, maintainable applications using **Concept Design** methodology - where applications are built from independent concepts connected by synchronizations.
 
 ## 🎯 What is Concept Design?
 
@@ -12,9 +12,11 @@ Concept Design is a modular software architecture approach that emphasizes:
 - **State Isolation**: Each concept manages its own state independently
 - **Synchronization**: Concepts interact through a sync engine without creating dependencies
 
+For more information on the Concept Design methodology, see the [Concept Design Guide](./framework/docs/concept-design.md).
+
 ## 📦 Repository Structure
 
-This repository contains the complete Concept Design ecosystem:
+This repository contains several utilities for exploring and developing Concept Design applications:
 
 ### 1. 🧩 [VS Code Extension](./vscode-extension/) 
 **Production-ready IDE tooling for Concept Design development**
@@ -36,7 +38,7 @@ This repository contains the complete Concept Design ecosystem:
 ### 2. ⚙️ [Engine Library](./engine-library/)
 **Core runtime engine for Concept Design applications**
 
-Published as `@sonnenreich/concept-design-engine` - the foundational library that powers Concept Design applications.
+Available for import as `@sonnenreich/concept-design-engine` - for use as a foundational library to build Concept Design applications in typescript.
 
 - **Sync Engine**: Coordinates concept interactions through synchronizations
 - **Database Integration**: Support for MongoDB, Prisma, and other databases  
@@ -53,7 +55,7 @@ Published as `@sonnenreich/concept-design-engine` - the foundational library tha
 ### 3. 📚 [Framework Documentation](./framework/)
 **Core methodology and specification reference**
 
-- **[Concept Design Guide](./framework/docs/concept-design.md)**: Complete methodology explanation
+- **[Concept Design Guide](./framework/docs/concept-design.md)**:  Methodology explanation
 - **[Implementation Patterns](./framework/docs/concept-implementation.md)**: How to implement concepts in TypeScript
 - **[State Specification](./framework/docs/concept-state-specification.md)**: Database and state management patterns
 - **[Synchronization Guide](./framework/docs/synchronization-implementation.md)**: How to connect concepts
@@ -99,9 +101,10 @@ npx tsx cli.ts validate --ai --format html
 ```
 
 ### 6. 🧪 [Testing & Evaluation](./tests/)
-**Comprehensive evaluation framework for testing AI-generated code**
+**Evaluation framework for testing AI-generated code**
+> WORK IN PROGRESS
 
-Real-world application examples that test the complete Concept Design workflow:
+Eventually this will contain several real-world application examples that test the Concept Design workflow:
 
 #### Quizzie - Quiz Application
 A complete Slido-inspired quiz application demonstrating:
@@ -293,7 +296,7 @@ Each variant includes:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see individual LICENSE files in each sub-project for details.
+This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](./LICENSE).
 
 ## 🌟 Key Benefits
 
